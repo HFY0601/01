@@ -15,16 +15,16 @@ function fetchStockPrices() {
     .then(res => res.text())
     .then(text => {
       codes.forEach(code => {
-        const match = text.match(new RegExp(`v_${code}="(.*?)";`));
+        const match = text.match(new RegExp(v_{code}="(.*?)";));
         if (!match) return;
         const parts = match[1].split('~');
         const price = parseFloat(parts[3]);
         const name = parts[1];
-        document.querySelectorAll(`[data-code="${code}"]`).forEach(card => {
+        document.querySelectorAll([data-code="{code}"]).forEach(card => {
           const shares = parseFloat(card.getAttribute('data-shares'));
           const value = (price * shares).toFixed(2);
-          card.querySelector('.price').textContent = `现价 ¥${price}`;
-          card.querySelector('.value').textContent = `市值 ¥${value}`;
+          card.querySelector('.price').textContent = 现价 ¥{price};
+          card.querySelector('.value').textContent = 市值 ¥{value};
         });
       });
     });
@@ -118,7 +118,7 @@ function loadDebts() {
     summary[debt.category] = (summary[debt.category] || 0) + parseFloat(debt.amount);
     const card = document.createElement('div');
     card.className = 'bg-white shadow rounded-xl p-4 border-l-4 border-red-500';
-    card.innerHTML = `<strong>${debt.name}</strong><br>¥${parseFloat(debt.amount).toFixed(2)}<br><small>${debt.category}</small><br><button onclick="deleteDebt(${index})" style='margin-top:5px;'>🗑 删除</button>`;
+    card.innerHTML = <strong>{debt.name}</strong><br>¥{parseFloat(debt.amount).toFixed(2)}<br><small>{debt.category}</small><br><button onclick="deleteDebt({index})" style='margin-top:5px;'>🗑 删除</button>;
     container.appendChild(card);
   });
 
@@ -198,24 +198,24 @@ function loadAssets() {
     if (asset.category === '股票' || asset.category === '基金') {
       card.setAttribute('data-code', (asset.code || '').toLowerCase());
       card.setAttribute('data-shares', asset.amount);
-      card.innerHTML = `<strong>${asset.name}</strong>
+      card.innerHTML = <strong>{asset.name}</strong>
   <br><span class="price text-sm text-gray-600">正在加载价格...</span>
   <br><span class="value font-semibold text-blue-600">市值 --</span>
-  <br><small>${asset.category} · ${asset.code}</small>
-  <br><button onclick="editShares(${index})" class="mt-1 mr-2 text-blue-600 hover:underline text-sm">✏️ 编辑</button>
-  <button onclick="deleteAsset(${index})" class="mt-1 text-red-600 hover:underline text-sm">🗑 删除</button>`;
+  <br><small>{asset.category} · {asset.code}</small>
+  <br><button onclick="editShares({index})" class="mt-1 mr-2 text-blue-600 hover:underline text-sm">✏️ 编辑</button>
+  <button onclick="deleteAsset({index})" class="mt-1 text-red-600 hover:underline text-sm">🗑 删除</button>;
         <br><span class="price text-sm text-gray-600">正在加载价格...</span>
         <br><span class="value font-semibold text-blue-600">市值 --</span>
-        <br><small>${asset.category} · ${asset.code}</small>
-        <br><button onclick="deleteAsset(${index})" class="mt-2 text-red-600 hover:underline text-sm">🗑 删除</button>`;
+        <br><small>{asset.category} · {asset.code}</small>
+        <br><button onclick="deleteAsset({index})" class="mt-2 text-red-600 hover:underline text-sm">🗑 删除</button>;
     } else {
-      card.innerHTML = `<strong>${asset.name}</strong>
+      card.innerHTML = <strong>{asset.name}</strong>
   <br><span class="price text-sm text-gray-600">正在加载价格...</span>
   <br><span class="value font-semibold text-blue-600">市值 --</span>
-  <br><small>${asset.category} · ${asset.code}</small>
-  <br><button onclick="editShares(${index})" class="mt-1 mr-2 text-blue-600 hover:underline text-sm">✏️ 编辑</button>
-  <button onclick="deleteAsset(${index})" class="mt-1 text-red-600 hover:underline text-sm">🗑 删除</button>`;<br>¥${parseFloat(asset.amount).toFixed(2)}<br><small>${asset.category}</small><br><button onclick="deleteAsset(${index})" class="mt-2 text-red-600 hover:underline text-sm">🗑 删除</button>`;
-    } onclick="deleteAsset(${index})" style='margin-top:5px;'>🗑 删除</button>`;
+  <br><small>{asset.category} · {asset.code}</small>
+  <br><button onclick="editShares({index})" class="mt-1 mr-2 text-blue-600 hover:underline text-sm">✏️ 编辑</button>
+  <button onclick="deleteAsset({index})" class="mt-1 text-red-600 hover:underline text-sm">🗑 删除</button>;<br>¥{parseFloat(asset.amount).toFixed(2)}<br><small>{asset.category}</small><br><button onclick="deleteAsset({index})" class="mt-2 text-red-600 hover:underline text-sm">🗑 删除</button>;
+    } onclick="deleteAsset({index})" style='margin-top:5px;'>🗑 删除</button>;
     container.appendChild(card);
   });
 
@@ -284,13 +284,13 @@ function exportCSV(type) {
 
   const csvRows = [headers.join(',')];
   data.forEach(item => {
-    const row = headers.map(h => `"${(item[h] ?? '').toString().replace(/"/g, '""')}"`);
+    const row = headers.map(h => "{(item[h] ?? '').toString().replace(/"/g, '""')}");
     csvRows.push(row.join(','));
   });
   const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  link.download = `${type}.csv`;
+  link.download = {type}.csv;
   link.click();
 }
 
@@ -351,7 +351,7 @@ function generateCalendar() {
   const calendarMonth = document.getElementById('calendarMonth');
 
   calendarGrid.innerHTML = '';
-  calendarMonth.textContent = `${year}年${month + 1}月`;
+  calendarMonth.textContent = {year}年{month + 1}月;
 
   // 获取有记账记录的日期集合
   const records = JSON.parse(localStorage.getItem('records') || '[]');
@@ -365,7 +365,7 @@ function generateCalendar() {
 
   // 填充日期
   for (let d = 1; d <= daysInMonth; d++) {
-    const dateStr = `${year}-${(month + 1).toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`;
+    const dateStr = {year}-{(month + 1).toString().padStart(2, '0')}-{d.toString().padStart(2, '0')};
     const cell = document.createElement('div');
     cell.textContent = d;
     cell.style.padding = '10px';
@@ -388,7 +388,7 @@ function updateBudgetBar() {
   const records = JSON.parse(localStorage.getItem('records') || '[]');
   const year = currentYear;
   const month = (currentMonth + 1).toString().padStart(2, '0');
-  const prefix = `${year}-${month}`;
+  const prefix = {year}-{month};
   const expenses = records
     .filter(r => r.type === 'expense' && r.date?.startsWith(prefix))
     .reduce((sum, r) => sum + parseFloat(r.amount || 0), 0);
@@ -396,18 +396,18 @@ function updateBudgetBar() {
   const percent = Math.min((expenses / budget) * 100, 100).toFixed(1);
   const bar = document.getElementById('budgetBar');
   bar.style.width = percent + '%';
-  bar.textContent = `¥${expenses.toFixed(2)} / ¥${budget}`;
+  bar.textContent = ¥{expenses.toFixed(2)} / ¥{budget};
   bar.style.backgroundColor = percent > 80 ? '#f44336' : '#165DFF';
-}="(.*?)";`));
+}="(.*?)";));
         if (!match) return;
         const parts = match[1].split('~');
         const price = parseFloat(parts[3]);
         const name = parts[1];
-        document.querySelectorAll(`[data-code="${code}"]`).forEach(card => {
+        document.querySelectorAll([data-code="{code}"]).forEach(card => {
           const shares = parseFloat(card.getAttribute('data-shares'));
           const value = (price * shares).toFixed(2);
-          card.querySelector('.price').textContent = `现价 ¥${price}`;
-          card.querySelector('.value').textContent = `市值 ¥${value}`;
+          card.querySelector('.price').textContent = 现价 ¥{price};
+          card.querySelector('.value').textContent = 市值 ¥{value};
         });
       });
     });
@@ -618,14 +618,14 @@ document.querySelector('[data-tab="assets"]').addEventListener('click', () => {
       tableBody.innerHTML = '';
       data.slice().reverse().forEach((item, index) => {
         const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="${item.type}">${item.type === 'income' ? '收入' : '支出'}</td>
-          <td class="p-2 border"${item.amount}</td>
-          <td class="p-2 border"${item.category}</td>
-          <td class="p-2 border"${item.date}</td>
-          <td class="p-2 border"${item.note || ''}</td>
-          <td class="p-2 border"<button onclick="deleteRecord(${index})">删除</button></td>
-        `;
+        tr.innerHTML = 
+          <td class="{item.type}">{item.type === 'income' ? '收入' : '支出'}</td>
+          <td class="p-2 border"{item.amount}</td>
+          <td class="p-2 border"{item.category}</td>
+          <td class="p-2 border"{item.date}</td>
+          <td class="p-2 border"{item.note || ''}</td>
+          <td class="p-2 border"<button onclick="deleteRecord({index})">删除</button></td>
+        ;
         tableBody.appendChild(tr);
       });
     }
@@ -738,7 +738,7 @@ function loadDebts() {
     summary[debt.category] = (summary[debt.category] || 0) + parseFloat(debt.amount);
     const card = document.createElement('div');
     card.className = 'bg-white shadow rounded-xl p-4 border-l-4 border-red-500';
-    card.innerHTML = `<strong>${debt.name}</strong><br>¥${parseFloat(debt.amount).toFixed(2)}<br><small>${debt.category}</small><br><button onclick="deleteDebt(${index})" style='margin-top:5px;'>🗑 删除</button>`;
+    card.innerHTML = <strong>{debt.name}</strong><br>¥{parseFloat(debt.amount).toFixed(2)}<br><small>{debt.category}</small><br><button onclick="deleteDebt({index})" style='margin-top:5px;'>🗑 删除</button>;
     container.appendChild(card);
   });
 
@@ -818,24 +818,24 @@ function loadAssets() {
     if (asset.category === '股票' || asset.category === '基金') {
       card.setAttribute('data-code', (asset.code || '').toLowerCase());
       card.setAttribute('data-shares', asset.amount);
-      card.innerHTML = `<strong>${asset.name}</strong>
+      card.innerHTML = <strong>{asset.name}</strong>
   <br><span class="price text-sm text-gray-600">正在加载价格...</span>
   <br><span class="value font-semibold text-blue-600">市值 --</span>
-  <br><small>${asset.category} · ${asset.code}</small>
-  <br><button onclick="editShares(${index})" class="mt-1 mr-2 text-blue-600 hover:underline text-sm">✏️ 编辑</button>
-  <button onclick="deleteAsset(${index})" class="mt-1 text-red-600 hover:underline text-sm">🗑 删除</button>`;
+  <br><small>{asset.category} · {asset.code}</small>
+  <br><button onclick="editShares({index})" class="mt-1 mr-2 text-blue-600 hover:underline text-sm">✏️ 编辑</button>
+  <button onclick="deleteAsset({index})" class="mt-1 text-red-600 hover:underline text-sm">🗑 删除</button>;
         <br><span class="price text-sm text-gray-600">正在加载价格...</span>
         <br><span class="value font-semibold text-blue-600">市值 --</span>
-        <br><small>${asset.category} · ${asset.code}</small>
-        <br><button onclick="deleteAsset(${index})" class="mt-2 text-red-600 hover:underline text-sm">🗑 删除</button>`;
+        <br><small>{asset.category} · {asset.code}</small>
+        <br><button onclick="deleteAsset({index})" class="mt-2 text-red-600 hover:underline text-sm">🗑 删除</button>;
     } else {
-      card.innerHTML = `<strong>${asset.name}</strong>
+      card.innerHTML = <strong>{asset.name}</strong>
   <br><span class="price text-sm text-gray-600">正在加载价格...</span>
   <br><span class="value font-semibold text-blue-600">市值 --</span>
-  <br><small>${asset.category} · ${asset.code}</small>
-  <br><button onclick="editShares(${index})" class="mt-1 mr-2 text-blue-600 hover:underline text-sm">✏️ 编辑</button>
-  <button onclick="deleteAsset(${index})" class="mt-1 text-red-600 hover:underline text-sm">🗑 删除</button>`;<br>¥${parseFloat(asset.amount).toFixed(2)}<br><small>${asset.category}</small><br><button onclick="deleteAsset(${index})" class="mt-2 text-red-600 hover:underline text-sm">🗑 删除</button>`;
-    } onclick="deleteAsset(${index})" style='margin-top:5px;'>🗑 删除</button>`;
+  <br><small>{asset.category} · {asset.code}</small>
+  <br><button onclick="editShares({index})" class="mt-1 mr-2 text-blue-600 hover:underline text-sm">✏️ 编辑</button>
+  <button onclick="deleteAsset({index})" class="mt-1 text-red-600 hover:underline text-sm">🗑 删除</button>;<br>¥{parseFloat(asset.amount).toFixed(2)}<br><small>{asset.category}</small><br><button onclick="deleteAsset({index})" class="mt-2 text-red-600 hover:underline text-sm">🗑 删除</button>;
+    } onclick="deleteAsset({index})" style='margin-top:5px;'>🗑 删除</button>;
     container.appendChild(card);
   });
 
@@ -904,13 +904,13 @@ function exportCSV(type) {
 
   const csvRows = [headers.join(',')];
   data.forEach(item => {
-    const row = headers.map(h => `"${(item[h] ?? '').toString().replace(/"/g, '""')}"`);
+    const row = headers.map(h => "{(item[h] ?? '').toString().replace(/"/g, '""')}");
     csvRows.push(row.join(','));
   });
   const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  link.download = `${type}.csv`;
+  link.download = {type}.csv;
   link.click();
 }
 
@@ -957,7 +957,7 @@ function changeMonth(offset) {
   }
   generateCalendar();
 updateBudgetBar();
-}年${month + 1}月`;
+}年{month + 1}月;
 
   // 获取有记账记录的日期集合
   const records = JSON.parse(localStorage.getItem('records') || '[]');
@@ -971,7 +971,7 @@ updateBudgetBar();
 
   // 填充日期
   for (let d = 1; d <= daysInMonth; d++) {
-    const dateStr = `${year}-${(month + 1).toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`;
+    const dateStr = {year}-{(month + 1).toString().padStart(2, '0')}-{d.toString().padStart(2, '0')};
     const cell = document.createElement('div');
     cell.textContent = d;
     cell.style.padding = '10px';
@@ -994,7 +994,7 @@ function updateBudgetBar() {
   const records = JSON.parse(localStorage.getItem('records') || '[]');
   const year = currentYear;
   const month = (currentMonth + 1).toString().padStart(2, '0');
-  const prefix = `${year}-${month}`;
+  const prefix = {year}-{month};
   const expenses = records
     .filter(r => r.type === 'expense' && r.date?.startsWith(prefix))
     .reduce((sum, r) => sum + parseFloat(r.amount || 0), 0);
@@ -1002,7 +1002,7 @@ function updateBudgetBar() {
   const percent = Math.min((expenses / budget) * 100, 100).toFixed(1);
   const bar = document.getElementById('budgetBar');
   bar.style.width = percent + '%';
-  bar.textContent = `¥${expenses.toFixed(2)} / ¥${budget}`;
+  bar.textContent = ¥{expenses.toFixed(2)} / ¥{budget};
   bar.style.backgroundColor = percent > 80 ? '#f44336' : '#165DFF';
 }
 
@@ -1018,16 +1018,16 @@ function fetchStockPrices() {
     .then(res => res.text())
     .then(text => {
       codes.forEach(code => {
-        const match = text.match(new RegExp(`v_${code}="(.*?)";`));
+        const match = text.match(new RegExp(v_{code}="(.*?)";));
         if (!match) return;
         const parts = match[1].split('~');
         const price = parseFloat(parts[3]);
         const name = parts[1];
-        document.querySelectorAll(`[data-code="${code}"]`).forEach(card => {
+        document.querySelectorAll([data-code="{code}"]).forEach(card => {
           const shares = parseFloat(card.getAttribute('data-shares'));
           const value = (price * shares).toFixed(2);
-          card.querySelector('.price').textContent = `现价 ¥${price}`;
-          card.querySelector('.value').textContent = `市值 ¥${value}`;
+          card.querySelector('.price').textContent = 现价 ¥{price};
+          card.querySelector('.value').textContent = 市值 ¥{value};
         });
       });
     });
