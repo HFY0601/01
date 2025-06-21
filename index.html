@@ -3,31 +3,78 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <title>极简理财测试版</title>
+  <title>极简理财 - 完整版</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: sans-serif; padding: 20px; }
-    .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-    .tab-btn { padding: 10px 20px; cursor: pointer; border: 1px solid #ccc; border-radius: 4px; }
-    .tab-btn.active { background-color: #165DFF; color: white; }
-    .tab-content { display: none; border: 1px solid #eee; padding: 20px; border-radius: 4px; }
-    .tab-content.active { display: block; }
+    body { font-family: sans-serif; margin: 0; background: #f5f6f8; }
+    header { background: white; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 10; }
+    h1 { margin: 0; font-size: 1.25rem; }
+    nav { display: flex; border-bottom: 1px solid #ddd; }
+    .tab-btn {
+      flex: 1; padding: 12px; text-align: center; cursor: pointer;
+      border-bottom: 2px solid transparent; font-weight: bold; background: #fff;
+    }
+    .tab-btn.active { border-color: #165DFF; color: #165DFF; }
+    main { padding: 20px; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
   </style>
 </head>
 <body>
-  <h1>极简理财 - 标签页测试</h1>
-  <div class="tabs">
+  <header>
+    <h1>极简理财</h1>
+  </header>
+  <nav>
     <div class="tab-btn active" data-tab="dashboard">总览</div>
     <div class="tab-btn" data-tab="assets">资产</div>
     <div class="tab-btn" data-tab="liabilities">负债</div>
     <div class="tab-btn" data-tab="reports">报表</div>
     <div class="tab-btn" data-tab="profile">我的</div>
-  </div>
+  </nav>
+  <main>
+    <section id="dashboard" class="tab-content active">
+      <h2>总览</h2>
+      <p>欢迎使用极简理财，这里是您的财务总览。</p>
+      <ul>
+        <li>总资产：¥1,258,634.25</li>
+        <li>今日变动：+¥12,345.67</li>
+        <li>本周增长：+2.3%</li>
+      </ul>
+    </section>
 
-  <div id="dashboard" class="tab-content active">这是总览页面内容。</div>
-  <div id="assets" class="tab-content">这是资产页面内容。</div>
-  <div id="liabilities" class="tab-content">这是负债页面内容。</div>
-  <div id="reports" class="tab-content">这是报表页面内容。</div>
-  <div id="profile" class="tab-content">这是我的页面内容。</div>
+    <section id="assets" class="tab-content">
+      <h2>资产</h2>
+      <ul>
+        <li>活期存款：¥286,345.25</li>
+        <li>定期存款：¥500,000.00</li>
+        <li>投资资产：¥472,289.00</li>
+      </ul>
+    </section>
+
+    <section id="liabilities" class="tab-content">
+      <h2>负债</h2>
+      <ul>
+        <li>信用卡：¥12,000</li>
+        <li>房贷：¥560,000</li>
+        <li>其他借款：¥30,000</li>
+      </ul>
+    </section>
+
+    <section id="reports" class="tab-content">
+      <h2>报表</h2>
+      <p>将来这里可以嵌入柱状图、折线图、预算饼图等图表展示。</p>
+    </section>
+
+    <section id="profile" class="tab-content">
+      <h2>我的</h2>
+      <ul>
+        <li>账户设置</li>
+        <li>绑定银行卡</li>
+        <li>导出数据</li>
+        <li>关于我们</li>
+      </ul>
+    </section>
+  </main>
 
   <script>
     const tabButtons = document.querySelectorAll('.tab-btn');
@@ -36,10 +83,8 @@
     tabButtons.forEach(button => {
       button.addEventListener('click', () => {
         const target = button.getAttribute('data-tab');
-
         tabButtons.forEach(btn => btn.classList.remove('active'));
         tabContents.forEach(content => content.classList.remove('active'));
-
         button.classList.add('active');
         document.getElementById(target).classList.add('active');
       });
