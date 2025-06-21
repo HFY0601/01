@@ -3,7 +3,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <title>极简理财 - 完整版</title>
+  <title>极简理财 - 记账功能</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body { font-family: sans-serif; margin: 0; background: #f5f6f8; }
@@ -18,6 +18,15 @@
     main { padding: 20px; }
     .tab-content { display: none; }
     .tab-content.active { display: block; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+
+    form input, form select, form button {
+      padding: 8px; margin: 6px 0; width: 100%; box-sizing: border-box;
+    }
+    table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; font-size: 0.9rem; }
+    th { background: #f0f0f0; }
+    .income { color: green; }
+    .expense { color: red; }
   </style>
 </head>
 <body>
@@ -33,46 +42,46 @@
   </nav>
   <main>
     <section id="dashboard" class="tab-content active">
-      <h2>总览</h2>
-      <p>欢迎使用极简理财，这里是您的财务总览。</p>
-      <ul>
-        <li>总资产：¥1,258,634.25</li>
-        <li>今日变动：+¥12,345.67</li>
-        <li>本周增长：+2.3%</li>
-      </ul>
+      <h2>快速记账</h2>
+      <form id="entryForm">
+        <select id="type">
+          <option value="expense">支出</option>
+          <option value="income">收入</option>
+        </select>
+        <input type="number" id="amount" placeholder="金额 (必填)" required>
+        <select id="category">
+          <option value="餐饮">餐饮</option>
+          <option value="交通">交通</option>
+          <option value="工资">工资</option>
+          <option value="其他">其他</option>
+        </select>
+        <input type="date" id="date" required>
+        <input type="text" id="note" placeholder="备注（选填）">
+        <button type="submit">保存记录</button>
+      </form>
+
+      <h3>最近记录</h3>
+      <table id="recordTable">
+        <thead>
+          <tr>
+            <th>类型</th><th>金额</th><th>分类</th><th>日期</th><th>备注</th><th>操作</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </section>
 
     <section id="assets" class="tab-content">
-      <h2>资产</h2>
-      <ul>
-        <li>活期存款：¥286,345.25</li>
-        <li>定期存款：¥500,000.00</li>
-        <li>投资资产：¥472,289.00</li>
-      </ul>
+      <h2>资产</h2><p>资产内容待扩展。</p>
     </section>
-
     <section id="liabilities" class="tab-content">
-      <h2>负债</h2>
-      <ul>
-        <li>信用卡：¥12,000</li>
-        <li>房贷：¥560,000</li>
-        <li>其他借款：¥30,000</li>
-      </ul>
+      <h2>负债</h2><p>负债内容待扩展。</p>
     </section>
-
     <section id="reports" class="tab-content">
-      <h2>报表</h2>
-      <p>将来这里可以嵌入柱状图、折线图、预算饼图等图表展示。</p>
+      <h2>报表</h2><p>未来将显示图表分析。</p>
     </section>
-
     <section id="profile" class="tab-content">
-      <h2>我的</h2>
-      <ul>
-        <li>账户设置</li>
-        <li>绑定银行卡</li>
-        <li>导出数据</li>
-        <li>关于我们</li>
-      </ul>
+      <h2>我的</h2><p>用户设置、导出、数据管理等。</p>
     </section>
   </main>
 
@@ -89,6 +98,57 @@
         document.getElementById(target).classList.add('active');
       });
     });
+
+    // 本地保存和读取记录
+    const form = document.getElementById('entryForm');
+    const tableBody = document.querySelector('#recordTable tbody');
+
+    function loadRecords() {
+      const data = JSON.parse(localStorage.getItem('records') || '[]');
+      tableBody.innerHTML = '';
+      data.slice().reverse().forEach((item, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="${item.type}">${item.type === 'income' ? '收入' : '支出'}</td>
+          <td>${item.amount}</td>
+          <td>${item.category}</td>
+          <td>${item.date}</td>
+          <td>${item.note || ''}</td>
+          <td><button onclick="deleteRecord(${index})">删除</button></td>
+        `;
+        tableBody.appendChild(tr);
+      });
+    }
+
+    function saveRecord(e) {
+      e.preventDefault();
+      const type = document.getElementById('type').value;
+      const amount = document.getElementById('amount').value;
+      const category = document.getElementById('category').value;
+      const date = document.getElementById('date').value;
+      const note = document.getElementById('note').value;
+
+      if (!amount || !date) return alert('请填写金额和日期');
+
+      const newItem = { type, amount, category, date, note };
+      const records = JSON.parse(localStorage.getItem('records') || '[]');
+      records.push(newItem);
+      localStorage.setItem('records', JSON.stringify(records));
+      form.reset();
+      loadRecords();
+    }
+
+    function deleteRecord(index) {
+      const records = JSON.parse(localStorage.getItem('records') || '[]');
+      const realIndex = records.length - 1 - index;
+      records.splice(realIndex, 1);
+      localStorage.setItem('records', JSON.stringify(records));
+      loadRecords();
+    }
+
+    window.deleteRecord = deleteRecord;
+    form.addEventListener('submit', saveRecord);
+    loadRecords();
   </script>
 </body>
 </html>
