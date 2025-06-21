@@ -249,6 +249,50 @@ function importCSV() {
   };
   reader.readAsText(file);
 }
+// ===== 理财月历功能 =====
+function generateCalendar() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = today.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const daysInMonth = lastDay.getDate();
+  const startWeekday = firstDay.getDay(); // 0 (Sun) - 6 (Sat)
+  const calendarGrid = document.getElementById('calendarGrid');
+  const calendarMonth = document.getElementById('calendarMonth');
+
+  calendarGrid.innerHTML = '';
+  calendarMonth.textContent = `${year}年${month + 1}月`;
+
+  // 获取有记账记录的日期集合
+  const records = JSON.parse(localStorage.getItem('records') || '[]');
+  const markedDates = new Set(records.map(r => r.date));
+
+  // 填充空白
+  for (let i = 0; i < startWeekday; i++) {
+    const empty = document.createElement('div');
+    calendarGrid.appendChild(empty);
+  }
+
+  // 填充日期
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${(month + 1).toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`;
+    const cell = document.createElement('div');
+    cell.textContent = d;
+    cell.style.padding = '10px';
+    cell.style.textAlign = 'center';
+    cell.style.borderRadius = '4px';
+    cell.style.border = '1px solid #eee';
+    if (markedDates.has(dateStr)) {
+      cell.style.backgroundColor = '#165DFF';
+      cell.style.color = '#fff';
+      cell.style.fontWeight = 'bold';
+    }
+    calendarGrid.appendChild(cell);
+  }
+}
+
+generateCalendar();
 </script>
   <meta charset="UTF-8">
   <title>极简理财 - 记账功能</title>
@@ -290,7 +334,12 @@ function importCSV() {
   </nav>
   <main>
     <section id="dashboard" class="tab-content active">
-      <h2>快速记账</h2>
+      <h2>理财月历</h2>
+  <div id="calendarContainer" style="margin-bottom: 20px;">
+    <h3 id="calendarMonth"></h3>
+    <div id="calendarGrid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px;"></div>
+  </div>
+  <h2>快速记账</h2>
       <form id="entryForm">
         <select id="type">
           <option value="expense">支出</option>
@@ -687,6 +736,50 @@ function importCSV() {
   };
   reader.readAsText(file);
 }
+// ===== 理财月历功能 =====
+function generateCalendar() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = today.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const daysInMonth = lastDay.getDate();
+  const startWeekday = firstDay.getDay(); // 0 (Sun) - 6 (Sat)
+  const calendarGrid = document.getElementById('calendarGrid');
+  const calendarMonth = document.getElementById('calendarMonth');
+
+  calendarGrid.innerHTML = '';
+  calendarMonth.textContent = `${year}年${month + 1}月`;
+
+  // 获取有记账记录的日期集合
+  const records = JSON.parse(localStorage.getItem('records') || '[]');
+  const markedDates = new Set(records.map(r => r.date));
+
+  // 填充空白
+  for (let i = 0; i < startWeekday; i++) {
+    const empty = document.createElement('div');
+    calendarGrid.appendChild(empty);
+  }
+
+  // 填充日期
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${(month + 1).toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`;
+    const cell = document.createElement('div');
+    cell.textContent = d;
+    cell.style.padding = '10px';
+    cell.style.textAlign = 'center';
+    cell.style.borderRadius = '4px';
+    cell.style.border = '1px solid #eee';
+    if (markedDates.has(dateStr)) {
+      cell.style.backgroundColor = '#165DFF';
+      cell.style.color = '#fff';
+      cell.style.fontWeight = 'bold';
+    }
+    calendarGrid.appendChild(cell);
+  }
+}
+
+generateCalendar();
 </script>
 </body>
 </html>
