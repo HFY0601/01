@@ -197,6 +197,29 @@ function deleteAsset(index) {
 document.querySelector('[data-tab="assets"]').addEventListener('click', () => {
   setTimeout(loadAssets, 100);
 });
+
+// ===== CSV 导出功能 =====
+function exportCSV(type) {
+  const map = {
+    assets: ['name', 'amount', 'category'],
+    debts: ['name', 'amount', 'category'],
+    records: ['type', 'amount', 'category', 'date', 'note']
+  };
+  const headers = map[type];
+  const data = JSON.parse(localStorage.getItem(type) || '[]');
+  if (!data.length) return alert('没有可导出的数据');
+
+  const csvRows = [headers.join(',')];
+  data.forEach(item => {
+    const row = headers.map(h => `"${(item[h] ?? '').toString().replace(/"/g, '""')}"`);
+    csvRows.push(row.join(','));
+  });
+  const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `${type}.csv`;
+  link.click();
+}
 </script>
   <meta charset="UTF-8">
   <title>极简理财 - 记账功能</title>
@@ -308,6 +331,12 @@ document.querySelector('[data-tab="assets"]').addEventListener('click', () => {
 <canvas id="monthlyChart" height="180" style="margin-top: 30px;"></canvas>
 </section>
 <section id="profile" class="tab-content">
+  <h2>账户设置</h2>
+  <button onclick="exportCSV('assets')">导出资产</button>
+  <button onclick="exportCSV('debts')">导出负债</button>
+  <button onclick="exportCSV('records')">导出记账记录</button>
+  <p style="margin-top: 1rem;">导出后将下载 .csv 文件，可用 Excel 打开。</p>
+
       <h2>我的</h2><p>用户设置、导出、数据管理等。</p>
     </section>
   </main>
@@ -571,6 +600,29 @@ function deleteAsset(index) {
 document.querySelector('[data-tab="assets"]').addEventListener('click', () => {
   setTimeout(loadAssets, 100);
 });
+
+// ===== CSV 导出功能 =====
+function exportCSV(type) {
+  const map = {
+    assets: ['name', 'amount', 'category'],
+    debts: ['name', 'amount', 'category'],
+    records: ['type', 'amount', 'category', 'date', 'note']
+  };
+  const headers = map[type];
+  const data = JSON.parse(localStorage.getItem(type) || '[]');
+  if (!data.length) return alert('没有可导出的数据');
+
+  const csvRows = [headers.join(',')];
+  data.forEach(item => {
+    const row = headers.map(h => `"${(item[h] ?? '').toString().replace(/"/g, '""')}"`);
+    csvRows.push(row.join(','));
+  });
+  const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `${type}.csv`;
+  link.click();
+}
 </script>
 </body>
 </html>
