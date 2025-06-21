@@ -15,7 +15,7 @@ function fetchStockPrices() {
     .then(res => res.text())
     .then(text => {
       codes.forEach(code => {
-        const match = text.match(new RegExp(`v_${code}=\"(.*?)\";`));
+        const match = text.match(new RegExp(`v_${code}="(.*?)";`));
         if (!match) return;
         const parts = match[1].split('~');
         const price = parseFloat(parts[3]);
@@ -398,7 +398,7 @@ function updateBudgetBar() {
   bar.style.width = percent + '%';
   bar.textContent = `¥${expenses.toFixed(2)} / ¥${budget}`;
   bar.style.backgroundColor = percent > 80 ? '#f44336' : '#165DFF';
-}=\"(.*?)\";`));
+}="(.*?)";`));
         if (!match) return;
         const parts = match[1].split('~');
         const price = parseFloat(parts[3]);
@@ -1321,7 +1321,7 @@ function fetchStockPrices() {
     .then(res => res.text())
     .then(text => {
       codes.forEach(code => {
-        const match = text.match(new RegExp(`v_${code}=\"(.*?)\";`));
+        const match = text.match(new RegExp(`v_${code}="(.*?)";`));
         if (!match) return;
         const parts = match[1].split('~');
         const price = parseFloat(parts[3]);
