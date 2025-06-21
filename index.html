@@ -220,6 +220,35 @@ function exportCSV(type) {
   link.download = `${type}.csv`;
   link.click();
 }
+
+// ===== CSV 导入功能 =====
+function importCSV() {
+  const fileInput = document.getElementById('importFile');
+  const file = fileInput.files[0];
+  if (!file || !file.name.endsWith('.csv')) return alert('请选择一个 CSV 文件');
+
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const lines = e.target.result.split('\n').filter(l => l.trim());
+    const headers = lines[0].split(',').map(h => h.trim());
+    const records = lines.slice(1).map(line => {
+      const cols = line.split(',');
+      const item = {};
+      headers.forEach((h, i) => item[h] = cols[i]?.replace(/^"|"$/g, '').trim());
+      return item;
+    });
+
+    let key = '';
+    if (file.name.startsWith('assets')) key = 'assets';
+    else if (file.name.startsWith('debts')) key = 'debts';
+    else if (file.name.startsWith('records')) key = 'records';
+    else return alert('文件名必须为 assets.csv、debts.csv 或 records.csv');
+
+    localStorage.setItem(key, JSON.stringify(records));
+    alert('导入成功：' + file.name);
+  };
+  reader.readAsText(file);
+}
 </script>
   <meta charset="UTF-8">
   <title>极简理财 - 记账功能</title>
@@ -336,6 +365,12 @@ function exportCSV(type) {
   <button onclick="exportCSV('debts')">导出负债</button>
   <button onclick="exportCSV('records')">导出记账记录</button>
   <p style="margin-top: 1rem;">导出后将下载 .csv 文件，可用 Excel 打开。</p>
+<hr style="margin: 20px 0;">
+<h3>导入数据</h3>
+<p>上传 CSV 文件以恢复数据：</p>
+<input type="file" id="importFile" accept=".csv">
+<button onclick="importCSV()">导入数据</button>
+<p style="font-size: 0.9rem; color: gray;">支持文件名：assets.csv、debts.csv、records.csv</p>
 
       <h2>我的</h2><p>用户设置、导出、数据管理等。</p>
     </section>
@@ -622,6 +657,35 @@ function exportCSV(type) {
   link.href = URL.createObjectURL(blob);
   link.download = `${type}.csv`;
   link.click();
+}
+
+// ===== CSV 导入功能 =====
+function importCSV() {
+  const fileInput = document.getElementById('importFile');
+  const file = fileInput.files[0];
+  if (!file || !file.name.endsWith('.csv')) return alert('请选择一个 CSV 文件');
+
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const lines = e.target.result.split('\n').filter(l => l.trim());
+    const headers = lines[0].split(',').map(h => h.trim());
+    const records = lines.slice(1).map(line => {
+      const cols = line.split(',');
+      const item = {};
+      headers.forEach((h, i) => item[h] = cols[i]?.replace(/^"|"$/g, '').trim());
+      return item;
+    });
+
+    let key = '';
+    if (file.name.startsWith('assets')) key = 'assets';
+    else if (file.name.startsWith('debts')) key = 'debts';
+    else if (file.name.startsWith('records')) key = 'records';
+    else return alert('文件名必须为 assets.csv、debts.csv 或 records.csv');
+
+    localStorage.setItem(key, JSON.stringify(records));
+    alert('导入成功：' + file.name);
+  };
+  reader.readAsText(file);
 }
 </script>
 </body>
