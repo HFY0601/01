@@ -86,7 +86,7 @@ function loadAssets() {
     card.style.padding = '10px';
     card.style.borderRadius = '6px';
     card.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
-    card.innerHTML = `<strong>${asset.name}</strong><br>¥${parseFloat(asset.amount).toFixed(2)}<br><small>${asset.category}</small>`;
+    card.innerHTML = `<strong>${asset.name}</strong><br>¥${parseFloat(asset.amount).toFixed(2)}<br><small>${asset.category}</small><br><button onclick="deleteAsset(${index})" style='margin-top:5px;'>🗑 删除</button>`;
     container.appendChild(card);
   });
 
@@ -123,6 +123,14 @@ document.getElementById('assetForm').addEventListener('submit', function (e) {
   this.reset();
   loadAssets();
 });
+
+// 删除资产函数
+function deleteAsset(index) {
+  const data = JSON.parse(localStorage.getItem('assets') || '[]');
+  data.splice(index, 1);
+  localStorage.setItem('assets', JSON.stringify(data));
+  loadAssets();
+}
 
 // 加载资产数据
 document.querySelector('[data-tab="assets"]').addEventListener('click', () => {
@@ -377,7 +385,7 @@ function loadAssets() {
     card.style.padding = '10px';
     card.style.borderRadius = '6px';
     card.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
-    card.innerHTML = `<strong>${asset.name}</strong><br>¥${parseFloat(asset.amount).toFixed(2)}<br><small>${asset.category}</small>`;
+    card.innerHTML = `<strong>${asset.name}</strong><br>¥${parseFloat(asset.amount).toFixed(2)}<br><small>${asset.category}</small><br><button onclick="deleteAsset(${index})" style='margin-top:5px;'>🗑 删除</button>`;
     container.appendChild(card);
   });
 
@@ -414,6 +422,14 @@ document.getElementById('assetForm').addEventListener('submit', function (e) {
   this.reset();
   loadAssets();
 });
+
+// 删除资产函数
+function deleteAsset(index) {
+  const data = JSON.parse(localStorage.getItem('assets') || '[]');
+  data.splice(index, 1);
+  localStorage.setItem('assets', JSON.stringify(data));
+  loadAssets();
+}
 
 // 加载资产数据
 document.querySelector('[data-tab="assets"]').addEventListener('click', () => {
