@@ -2,9 +2,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <link rel="icon" type="image/png" href="favicon.png">
-  <link rel="shortcut icon" href="favicon.ico">
-  <title>资产领航</title>
   <script src="https://cdn.tailwindcss.com">
 function fetchStockPrices() {
   const data = JSON.parse(localStorage.getItem('assets') || '[]');
@@ -462,65 +459,361 @@ document.querySelector('[data-tab="assets"]').addEventListener('click', () => {
     <div class="tab-btn" data-tab="profile">我的</div>
   </nav>
   <main>
-    <section id="dashboard" class="tab-content active">
-<style>
-  .dashboard-grid {
-    @apply grid grid-cols-1 md:grid-cols-2 gap-6;
-  }
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-  }
-  @media (max-width: 768px) {
-    .dashboard-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-</style>
-<div class="dashboard-grid mt-4">
-      <div><h2>理财月历</h2>
-  <div id="calendarContainer" class="bg-white rounded-xl shadow p-4 mb-4">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-      <button onclick="changeMonth(-1)">◀ 上月</button>
-      <h3 id="calendarMonth" style="margin: 0;"></h3>
-      <button onclick="changeMonth(1)">下月 ▶</button>
-    </div>
-    <div id="calendarGrid" class="grid grid-cols-7 gap-1 text-center text-sm text-gray-800" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px;"></div>
-<hr style="margin: 10px 0;">
-<div class="bg-white rounded-xl shadow p-4 mt-4">
-  <p class="text-sm font-medium text-gray-700 mb-2">本月预算使用：</p>
-  <div style="background: #eee; border-radius: 8px; overflow: hidden; height: 20px;">
-    <div id="budgetBar" class="h-full text-white text-center text-xs leading-5 bg-blue-600"></div>
-  </div>
-</div>
-  </div>
-  </div><div><h2>快速记账</h2>
-      <form id="entryForm" class="space-y-2 bg-white rounded-xl shadow p-4 mb-4">
-        <select id="type" class="w-full border rounded p-2">
-          <option value="expense">支出</option>
-          <option value="income">收入</option>
-        </select>
-        <input type="number" id="amount" class="w-full border rounded p-2" placeholder="金额 (必填)" required>
-        <select id="category" class="w-full border rounded p-2">
-          <option value="餐饮">餐饮</option>
-          <option value="交通">交通</option>
-          <option value="工资">工资</option>
-          <option value="其他">其他</option>
-        </select>
-        <input type="date" id="date" class="w-full border rounded p-2" required>
-        <input type="text" id="note" class="w-full border rounded p-2" placeholder="备注（选填）">
-        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">保存记录</button>
-      </form>
+    <section id="dashboard" class="tab-content">
+      <!-- 总资产卡片和理财月历 -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+        <div class="lg:col-span-7 bg-white rounded-xl p-6 card-shadow asset-card slide-in">
+          <div class="card-header mb-6">
+            <h2 class="text-xl font-bold">总资产</h2>
+            <div class="flex space-x-3">
+              <button class="text-primary text-sm hover:underline action-btn flex items-center">
+                <i class="fa fa-bar-chart mr-1"></i> 详情
+              </button>
+              <button class="text-primary text-sm hover:underline action-btn flex items-center">
+                <i class="fa fa-pie-chart mr-1"></i> 分析
+              </button>
+            </div>
+          </div>
+          
+          <div class="flex items-end mb-6">
+            <span class="text-4xl font-bold number-animation number-transition number-counter" id="totalAssets">¥1,258,634.25</span>
+            <div class="ml-4">
+              <div class="text-success flex items-center text-sm">
+                <i class="fa fa-arrow-up mr-1"></i> 2.3% <span class="text-dark-light ml-1">本周</span>
+              </div>
+              <div class="text-dark-light text-sm mt-1">+¥12,345.67 今日</div>
+            </div>
+          </div>
+          
+          <div class="grid grid-cols-3 gap-4 mb-6">
+            <div class="bg-ultra-light rounded-lg p-4">
+              <div class="text-dark-light text-xs mb-1">活期存款</div>
+              <div class="font-medium">¥286,345.25</div>
+            </div>
+            <div class="bg-ultra-light rounded-lg p-4">
+              <div class="text-dark-light text-xs mb-1">定期存款</div>
+              <div class="font-medium">¥500,000.00</div>
+            </div>
+            <div class="bg-ultra-light rounded-lg p-4">
+              <div class="text-dark-light text-xs mb-1">投资</div>
+              <div class="font-medium">¥472,289.00</div>
+            </div>
+          </div>
+          
+          <div class="mt-6 h-56">
+            <canvas id="assetTrendChart"></canvas>
+          </div>
+        </div>
+        
+        <!-- 理财月历 -->
+        <div class="lg:col-span-5 bg-white rounded-xl p-6 card-shadow card-hover slide-in gradient-bg" style="animation-delay: 0.1s">
+          <div class="calendar-header">
+            <div class="flex justify-between items-center mb-6">
+              <h2 class="text-xl font-bold">理财月历</h2>
+              <div class="flex space-x-2">
+                <button class="p-2 rounded-full hover:bg-ultra-light transition-colors month-navigation" id="prevMonth">
+                  <i class="fa fa-chevron-left text-dark-light"></i>
+                </button>
+                <button class="p-2 rounded-full hover:bg-ultra-light transition-colors month-navigation" id="nextMonth">
+                  <i class="fa fa-chevron-right text-dark-light"></i>
+                </button>
+              </div>
+            </div>
+            
+            <!-- 月度财务概览 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+              <div class="bg-white rounded-xl p-4 financial-stats-card income-gradient stat-card">
+                <div class="text-dark-light text-xs">收入</div>
+                <div class="text-success font-medium mt-1 flex justify-between items-center">
+                  <span>¥28,654</span>
+                  <div class="flex items-center">
+                    <i class="fa fa-arrow-up text-xs mr-1"></i>
+                    <span class="text-xs">8.5%</span>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-white rounded-xl p-4 financial-stats-card expense-gradient stat-card">
+                <div class="text-dark-light text-xs">支出</div>
+                <div class="text-danger font-medium mt-1 flex justify-between items-center">
+                  <span>¥16,325</span>
+                  <div class="flex items-center">
+                    <i class="fa fa-arrow-down text-xs mr-1"></i>
+                    <span class="text-xs">3.2%</span>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-white rounded-xl p-4 financial-stats-card balance-gradient stat-card">
+                <div class="text-dark-light text-xs">结余</div>
+                <div class="text-primary font-medium mt-1 flex justify-between items-center">
+                  <span>¥12,328</span>
+                  <i class="fa fa-balance-scale text-xs"></i>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 月度趋势图 -->
+            <div class="bg-white rounded-xl p-4 mb-6 financial-stats-card stat-card">
+              <div class="text-dark-light text-xs mb-2">收支趋势</div>
+              <div class="financial-trend-chart">
+                <canvas id="monthlyTrendChart"></canvas>
+              </div>
+            </div>
+            
+            <div class="mb-4 text-center">
+              <h3 class="font-bold text-lg" id="currentMonth">2025年6月</h3>
+            </div>
+            
+            <div class="grid grid-cols-7 gap-1 mb-3">
+              <div class="text-center text-dark-light text-sm py-2 font-medium">日</div>
+              <div class="text-center text-dark-light text-sm py-2 font-medium">一</div>
+              <div class="text-center text-dark-light text-sm py-2 font-medium">二</div>
+              <div class="text-center text-dark-light text-sm py-2 font-medium">三</div>
+              <div class="text-center text-dark-light text-sm py-2 font-medium">四</div>
+              <div class="text-center text-dark-light text-sm py-2 font-medium">五</div>
+              <div class="text-center text-dark-light text-sm py-2 font-medium">六</div>
+            </div>
+          </div>
+          
+          <div class="calendar-body relative overflow-hidden">
+            <div class="grid grid-cols-7 gap-2 calendar-transition" id="calendarDays">
+              <!-- 日历内容将通过JavaScript动态生成 -->
+            </div>
+          </div>
+          
+          <!-- 优化后的图例布局 -->
+          <div class="mt-4 p-3 bg-ultra-light/50 rounded-lg">
+            <div class="flex flex-wrap justify-center gap-x-6 gap-y-2">
+              <div class="flex items-center">
+                <div class="w-3 h-3 rounded-full bg-success mr-2"></div>
+                <span class="text-sm text-dark-light">收入</span>
+              </div>
+              <div class="flex items-center">
+                <div class="w-3 h-3 rounded-full bg-danger mr-2"></div>
+                <span class="text-sm text-dark-light">支出</span>
+              </div>
+              <div class="flex items-center">
+                <div class="w-3 h-3 rounded-full bg-primary mr-2"></div>
+                <span class="text-sm text-dark-light">还款日</span>
+              </div>
+              <div class="flex items-center">
+                <div class="w-3 h-3 rounded-full bg-primary/70 border border-primary mr-2"></div>
+                <span class="text-sm text-dark-light">今天</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      </div></div><h3>最近记录</h3>
-      <table id="recordTable" class="w-full border text-sm bg-white rounded shadow overflow-hidden">
-        <thead>
-          <tr>
-            <th class="bg-gray-100 p-2 border text-left">类型</th><th class="bg-gray-100 p-2 border text-left">金额</th><th class="bg-gray-100 p-2 border text-left">分类</th><th class="bg-gray-100 p-2 border text-left">日期</th><th class="bg-gray-100 p-2 border text-left">备注</th><th class="bg-gray-100 p-2 border text-left">操作</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+      <!-- 快捷操作区 -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <button class="bg-white rounded-xl p-6 card-shadow hover-scale slide-in" style="animation-delay: 0.2s">
+          <div class="flex items-center">
+            <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary mr-4">
+              <i class="fa fa-exchange text-xl"></i>
+            </div>
+            <div>
+              <h3 class="font-medium">账户转账</h3>
+              <p class="text-dark-light text-sm mt-1">在不同账户间快速转账</p>
+            </div>
+          </div>
+        </button>
+        
+        <button class="bg-white rounded-xl p-6 card-shadow hover-scale slide-in" style="animation-delay: 0.3s">
+          <div class="flex items-center">
+            <div class="w-12 h-12 rounded-full bg-warning/10 flex items-center justify-center text-warning mr-4">
+              <i class="fa fa-credit-card text-xl"></i>
+            </div>
+            <div>
+              <h3 class="font-medium">信用卡还款</h3>
+              <p class="text-dark-light text-sm mt-1">及时还款，避免逾期</p>
+            </div>
+          </div>
+        </button>
+        
+        <button class="bg-white rounded-xl p-6 card-shadow hover-scale slide-in" style="animation-delay: 0.4s">
+          <div class="flex items-center">
+            <div class="w-12 h-12 rounded-full bg-success/10 flex items-center justify-center text-success mr-4">
+              <i class="fa fa-line-chart text-xl"></i>
+            </div>
+            <div>
+              <h3 class="font-medium">投资组合</h3>
+              <p class="text-dark-light text-sm mt-1">查看和管理您的投资</p>
+            </div>
+          </div>
+        </button>
+      </div>
+
+      <!-- 预算进度 -->
+      <div class="bg-white rounded-xl p-6 card-shadow card-hover slide-in mb-6" style="animation-delay: 0.15s">
+        <div class="card-header mb-6">
+          <h2 class="text-xl font-bold">本月预算进度</h2>
+          <button class="text-primary text-sm hover:underline action-btn flex items-center">
+            <i class="fa fa-cog mr-1"></i> 设置预算
+          </button>
+        </div>
+        
+        <div class="space-y-5">
+          <div>
+            <div class="flex justify-between mb-2">
+              <div class="flex items-center">
+                <div class="w-3 h-3 rounded-full bg-warning mr-2"></div>
+                <span class="font-medium">餐饮</span>
+              </div>
+              <span class="text-dark-light text-sm">¥2,550 / ¥3,000</span>
+            </div>
+            <div class="budget-progress-bar">
+              <div class="budget-progress bg-warning" style="width: 85%"></div>
+            </div>
+          </div>
+          
+          <div>
+            <div class="flex justify-between mb-2">
+              <div class="flex items-center">
+                <div class="w-3 h-3 rounded-full bg-danger mr-2"></div>
+                <span class="font-medium">购物</span>
+              </div>
+              <span class="text-dark-light text-sm">¥4,825 / ¥5,000</span>
+            </div>
+            <div class="budget-progress-bar">
+              <div class="budget-progress bg-danger" style="width: 96%"></div>
+            </div>
+          </div>
+          
+          <div>
+            <div class="flex justify-between mb-2">
+              <div class="flex items-center">
+                <div class="w-3 h-3 rounded-full bg-success mr-2"></div>
+                <span class="font-medium">交通</span>
+              </div>
+              <span class="text-dark-light text-sm">¥650 / ¥1,000</span>
+            </div>
+            <div class="budget-progress-bar">
+              <div class="budget-progress bg-success" style="width: 65%"></div>
+            </div>
+          </div>
+          
+          <div>
+            <div class="flex justify-between mb-2">
+              <div class="flex items-center">
+                <div class="w-3 h-3 rounded-full bg-primary mr-2"></div>
+                <span class="font-medium">娱乐</span>
+              </div>
+              <span class="text-dark-light text-sm">¥1,200 / ¥2,000</span>
+            </div>
+            <div class="budget-progress-bar">
+              <div class="budget-progress bg-primary" style="width: 60%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 本月收支概览 -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div class="bg-white rounded-xl p-6 card-shadow card-hover slide-in" style="animation-delay: 0.5s">
+          <div class="card-header mb-6">
+            <h2 class="text-xl font-bold">本月收入</h2>
+            <button class="text-primary text-sm hover:underline action-btn flex items-center">
+              <i class="fa fa-list mr-1"></i> 查看详情
+            </button>
+          </div>
+          <div class="flex items-end mb-6">
+            <span class="text-3xl font-bold number-animation number-counter">¥28,654.32</span>
+            <span class="text-dark-light ml-2 mb-0.5">较上月</span>
+          </div>
+          <div class="mt-6 grid grid-cols-3 gap-3">
+            <div class="bg-ultra-light rounded-lg p-4 text-center">
+              <div class="text-dark-light text-xs mb-1">工资</div>
+              <div class="font-medium">¥25,000</div>
+            </div>
+            <div class="bg-ultra-light rounded-lg p-4 text-center">
+              <div class="text-dark-light text-xs mb-1">投资</div>
+              <div class="font-medium">¥3,254</div>
+            </div>
+            <div class="bg-ultra-light rounded-lg p-4 text-center">
+              <div class="text-dark-light text-xs mb-1">其他</div>
+              <div class="font-medium">¥400.32</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl p-6 card-shadow card-hover slide-in" style="animation-delay: 0.6s">
+          <div class="card-header mb-6">
+            <h2 class="text-xl font-bold">本月支出</h2>
+            <button class="text-primary text-sm hover:underline action-btn flex items-center">
+              <i class="fa fa-list mr-1"></i> 查看详情
+            </button>
+          </div>
+          <div class="flex items-end mb-6">
+            <span class="text-3xl font-bold number-animation number-counter">¥16,325.78</span>
+            <span class="text-dark-light ml-2 mb-0.5">较上月</span>
+          </div>
+          <div class="mt-6 grid grid-cols-3 gap-3">
+            <div class="bg-ultra-light rounded-lg p-4 text-center">
+              <div class="text-dark-light text-xs mb-1">生活</div>
+              <div class="font-medium">¥6,500</div>
+            </div>
+            <div class="bg-ultra-light rounded-lg p-4 text-center">
+              <div class="text-dark-light text-xs mb-1">购物</div>
+              <div class="font-medium">¥4,825</div>
+            </div>
+            <div class="bg-ultra-light rounded-lg p-4 text-center">
+              <div class="text-dark-light text-xs mb-1">其他</div>
+              <div class="font-medium">¥4,900.78</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 消息中心 -->
+      <div class="bg-white rounded-xl p-6 card-shadow card-hover slide-in" style="animation-delay: 0.7s">
+        <div class="card-header mb-6">
+          <h2 class="text-xl font-bold">消息中心</h2>
+          <button class="text-primary text-sm hover:underline action-btn flex items-center">
+            <i class="fa fa-angle-right mr-1"></i> 查看全部
+          </button>
+        </div>
+        
+        <div class="space-y-4">
+          <div class="flex items-start p-4 rounded-xl bg-ultra-light/50 hover:bg-ultra-light transition-colors">
+            <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary mr-4 flex-shrink-0">
+              <i class="fa fa-bell-o"></i>
+            </div>
+            <div class="flex-grow">
+              <div class="flex justify-between">
+                <h3 class="font-medium">信用卡还款提醒</h3>
+                <span class="text-dark-light text-xs">10分钟前</span>
+              </div>
+              <p class="text-dark-light text-sm mt-1">您的招商银行信用卡（****5678）将于3天后到期，需还款¥3,562.89</p>
+            </div>
+          </div>
+          
+          <div class="flex items-start p-4 rounded-xl bg-ultra-light/50 hover:bg-ultra-light transition-colors">
+            <div class="w-10 h-10 rounded-full bg-success/10 flex items-center justify-center text-success mr-4 flex-shrink-0">
+              <i class="fa fa-line-chart"></i>
+            </div>
+            <div class="flex-grow">
+              <div class="flex justify-between">
+                <h3 class="font-medium">投资收益提醒</h3>
+                <span class="text-dark-light text-xs">2小时前</span>
+              </div>
+              <p class="text-dark-light text-sm mt-1">您的基金组合（易方达蓝筹精选混合）今日收益+¥245</p>
+            </div>
+          </div>
+          
+          <div class="flex items-start p-4 rounded-xl bg-ultra-light/50 hover:bg-ultra-light transition-colors">
+            <div class="w-10 h-10 rounded-full bg-warning/10 flex items-center justify-center text-warning mr-4 flex-shrink-0">
+              <i class="fa fa-exclamation-triangle"></i>
+            </div>
+            <div class="flex-grow">
+              <div class="flex justify-between">
+                <h3 class="font-medium">预算预警</h3>
+                <span class="text-dark-light text-xs">昨天</span>
+              </div>
+              <p class="text-dark-light text-sm mt-1">您的购物预算已使用96%，请注意控制支出</p>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <section id="assets" class="tab-content">
