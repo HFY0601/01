@@ -171,6 +171,18 @@ document.querySelector('[data-tab="liabilities"]').addEventListener('click', () 
   setTimeout(loadDebts, 100);
 });
 
+// 编辑股票/基金持仓股数
+function editShares(index) {
+  const data = JSON.parse(localStorage.getItem('assets') || '[]');
+  const asset = data[index];
+  const input = prompt("请输入新的持仓股数 / 份额：", asset.amount);
+  if (!input || isNaN(input)) return alert("请输入有效的数字");
+  asset.amount = parseFloat(input).toFixed(2);
+  localStorage.setItem('assets', JSON.stringify(data));
+  loadAssets();
+  fetchStockPrices();
+}
+
 // ===== 资产功能 =====
 function loadAssets() {
   const data = JSON.parse(localStorage.getItem('assets') || '[]');
@@ -187,12 +199,22 @@ function loadAssets() {
       card.setAttribute('data-code', (asset.code || '').toLowerCase());
       card.setAttribute('data-shares', asset.amount);
       card.innerHTML = `<strong>${asset.name}</strong>
+  <br><span class="price text-sm text-gray-600">正在加载价格...</span>
+  <br><span class="value font-semibold text-blue-600">市值 --</span>
+  <br><small>${asset.category} · ${asset.code}</small>
+  <br><button onclick="editShares(${index})" class="mt-1 mr-2 text-blue-600 hover:underline text-sm">✏️ 编辑</button>
+  <button onclick="deleteAsset(${index})" class="mt-1 text-red-600 hover:underline text-sm">🗑 删除</button>`;
         <br><span class="price text-sm text-gray-600">正在加载价格...</span>
         <br><span class="value font-semibold text-blue-600">市值 --</span>
         <br><small>${asset.category} · ${asset.code}</small>
         <br><button onclick="deleteAsset(${index})" class="mt-2 text-red-600 hover:underline text-sm">🗑 删除</button>`;
     } else {
-      card.innerHTML = `<strong>${asset.name}</strong><br>¥${parseFloat(asset.amount).toFixed(2)}<br><small>${asset.category}</small><br><button onclick="deleteAsset(${index})" class="mt-2 text-red-600 hover:underline text-sm">🗑 删除</button>`;
+      card.innerHTML = `<strong>${asset.name}</strong>
+  <br><span class="price text-sm text-gray-600">正在加载价格...</span>
+  <br><span class="value font-semibold text-blue-600">市值 --</span>
+  <br><small>${asset.category} · ${asset.code}</small>
+  <br><button onclick="editShares(${index})" class="mt-1 mr-2 text-blue-600 hover:underline text-sm">✏️ 编辑</button>
+  <button onclick="deleteAsset(${index})" class="mt-1 text-red-600 hover:underline text-sm">🗑 删除</button>`;<br>¥${parseFloat(asset.amount).toFixed(2)}<br><small>${asset.category}</small><br><button onclick="deleteAsset(${index})" class="mt-2 text-red-600 hover:underline text-sm">🗑 删除</button>`;
     } onclick="deleteAsset(${index})" style='margin-top:5px;'>🗑 删除</button>`;
     container.appendChild(card);
   });
@@ -791,6 +813,18 @@ document.querySelector('[data-tab="liabilities"]').addEventListener('click', () 
   setTimeout(loadDebts, 100);
 });
 
+// 编辑股票/基金持仓股数
+function editShares(index) {
+  const data = JSON.parse(localStorage.getItem('assets') || '[]');
+  const asset = data[index];
+  const input = prompt("请输入新的持仓股数 / 份额：", asset.amount);
+  if (!input || isNaN(input)) return alert("请输入有效的数字");
+  asset.amount = parseFloat(input).toFixed(2);
+  localStorage.setItem('assets', JSON.stringify(data));
+  loadAssets();
+  fetchStockPrices();
+}
+
 // ===== 资产功能 =====
 function loadAssets() {
   const data = JSON.parse(localStorage.getItem('assets') || '[]');
@@ -807,12 +841,22 @@ function loadAssets() {
       card.setAttribute('data-code', (asset.code || '').toLowerCase());
       card.setAttribute('data-shares', asset.amount);
       card.innerHTML = `<strong>${asset.name}</strong>
+  <br><span class="price text-sm text-gray-600">正在加载价格...</span>
+  <br><span class="value font-semibold text-blue-600">市值 --</span>
+  <br><small>${asset.category} · ${asset.code}</small>
+  <br><button onclick="editShares(${index})" class="mt-1 mr-2 text-blue-600 hover:underline text-sm">✏️ 编辑</button>
+  <button onclick="deleteAsset(${index})" class="mt-1 text-red-600 hover:underline text-sm">🗑 删除</button>`;
         <br><span class="price text-sm text-gray-600">正在加载价格...</span>
         <br><span class="value font-semibold text-blue-600">市值 --</span>
         <br><small>${asset.category} · ${asset.code}</small>
         <br><button onclick="deleteAsset(${index})" class="mt-2 text-red-600 hover:underline text-sm">🗑 删除</button>`;
     } else {
-      card.innerHTML = `<strong>${asset.name}</strong><br>¥${parseFloat(asset.amount).toFixed(2)}<br><small>${asset.category}</small><br><button onclick="deleteAsset(${index})" class="mt-2 text-red-600 hover:underline text-sm">🗑 删除</button>`;
+      card.innerHTML = `<strong>${asset.name}</strong>
+  <br><span class="price text-sm text-gray-600">正在加载价格...</span>
+  <br><span class="value font-semibold text-blue-600">市值 --</span>
+  <br><small>${asset.category} · ${asset.code}</small>
+  <br><button onclick="editShares(${index})" class="mt-1 mr-2 text-blue-600 hover:underline text-sm">✏️ 编辑</button>
+  <button onclick="deleteAsset(${index})" class="mt-1 text-red-600 hover:underline text-sm">🗑 删除</button>`;<br>¥${parseFloat(asset.amount).toFixed(2)}<br><small>${asset.category}</small><br><button onclick="deleteAsset(${index})" class="mt-2 text-red-600 hover:underline text-sm">🗑 删除</button>`;
     } onclick="deleteAsset(${index})" style='margin-top:5px;'>🗑 删除</button>`;
     container.appendChild(card);
   });
