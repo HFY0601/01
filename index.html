@@ -2,7 +2,41 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.tailwindcss.com">
+function fetchStockPrices() {
+  const data = JSON.parse(localStorage.getItem('assets') || '[]');
+  const codes = data.filter(a => a.category === '股票' || a.category === '基金')
+    .map(a => a.code?.toLowerCase()).filter(Boolean);
+
+  if (codes.length === 0) return;
+
+  const url = 'https://qt.gtimg.cn/q=' + codes.join(',');
+  fetch(url)
+    .then(res => res.text())
+    .then(text => {
+      codes.forEach(code => {
+        const match = text.match(new RegExp(`v_${code}=\"(.*?)\";`));
+        if (!match) return;
+        const parts = match[1].split('~');
+        const price = parseFloat(parts[3]);
+        const name = parts[1];
+        document.querySelectorAll(`[data-code="${code}"]`).forEach(card => {
+          const shares = parseFloat(card.getAttribute('data-shares'));
+          const value = (price * shares).toFixed(2);
+          card.querySelector('.price').textContent = `现价 ¥${price}`;
+          card.querySelector('.value').textContent = `市值 ¥${value}`;
+        });
+      });
+    });
+}
+setInterval(fetchStockPrices, 60000); // 每分钟刷新
+document.querySelector('[data-tab="assets"]').addEventListener('click', () => {
+  setTimeout(() => {
+    loadAssets();
+    fetchStockPrices();
+  }, 100);
+});
+</script>
   <style>body { background-color: #f9fafb; }</style>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js">
@@ -115,7 +149,12 @@ document.getElementById('debtForm').addEventListener('submit', function (e) {
   const category = document.getElementById('debtCategory').value;
   if (!name || !amount) return alert('请输入完整负债信息');
   const data = JSON.parse(localStorage.getItem('debts') || '[]');
-  data.push({ name, amount, category });
+  let code = "";
+  if (category === "股票" || category === "基金") {
+    code = prompt("请输入股票/基金代码（如 sh600519, usAAPL, hk0700, f110011）", "");
+    if (!code) return alert("股票或基金必须填写代码");
+  }
+  data.push({ name, amount, category, code });
   localStorage.setItem('debts', JSON.stringify(data));
   this.reset();
   loadDebts();
@@ -144,7 +183,17 @@ function loadAssets() {
     summary[asset.category] = (summary[asset.category] || 0) + parseFloat(asset.amount);
     const card = document.createElement('div');
     card.className = 'bg-white shadow rounded-xl p-4 border-l-4 border-blue-500';
-    card.innerHTML = `<strong>${asset.name}</strong><br>¥${parseFloat(asset.amount).toFixed(2)}<br><small>${asset.category}</small><br><button onclick="deleteAsset(${index})" style='margin-top:5px;'>🗑 删除</button>`;
+    if (asset.category === '股票' || asset.category === '基金') {
+      card.setAttribute('data-code', (asset.code || '').toLowerCase());
+      card.setAttribute('data-shares', asset.amount);
+      card.innerHTML = `<strong>${asset.name}</strong>
+        <br><span class="price text-sm text-gray-600">正在加载价格...</span>
+        <br><span class="value font-semibold text-blue-600">市值 --</span>
+        <br><small>${asset.category} · ${asset.code}</small>
+        <br><button onclick="deleteAsset(${index})" class="mt-2 text-red-600 hover:underline text-sm">🗑 删除</button>`;
+    } else {
+      card.innerHTML = `<strong>${asset.name}</strong><br>¥${parseFloat(asset.amount).toFixed(2)}<br><small>${asset.category}</small><br><button onclick="deleteAsset(${index})" class="mt-2 text-red-600 hover:underline text-sm">🗑 删除</button>`;
+    } onclick="deleteAsset(${index})" style='margin-top:5px;'>🗑 删除</button>`;
     container.appendChild(card);
   });
 
@@ -176,7 +225,12 @@ document.getElementById('assetForm').addEventListener('submit', function (e) {
   const category = document.getElementById('assetCategory').value;
   if (!name || !amount) return alert('请输入完整资产信息');
   const data = JSON.parse(localStorage.getItem('assets') || '[]');
-  data.push({ name, amount, category });
+  let code = "";
+  if (category === "股票" || category === "基金") {
+    code = prompt("请输入股票/基金代码（如 sh600519, usAAPL, hk0700, f110011）", "");
+    if (!code) return alert("股票或基金必须填写代码");
+  }
+  data.push({ name, amount, category, code });
   localStorage.setItem('assets', JSON.stringify(data));
   this.reset();
   loadAssets();
@@ -323,6 +377,40 @@ function updateBudgetBar() {
   bar.textContent = `¥${expenses.toFixed(2)} / ¥${budget}`;
   bar.style.backgroundColor = percent > 80 ? '#f44336' : '#165DFF';
 }
+
+function fetchStockPrices() {
+  const data = JSON.parse(localStorage.getItem('assets') || '[]');
+  const codes = data.filter(a => a.category === '股票' || a.category === '基金')
+    .map(a => a.code?.toLowerCase()).filter(Boolean);
+
+  if (codes.length === 0) return;
+
+  const url = 'https://qt.gtimg.cn/q=' + codes.join(',');
+  fetch(url)
+    .then(res => res.text())
+    .then(text => {
+      codes.forEach(code => {
+        const match = text.match(new RegExp(`v_${code}=\"(.*?)\";`));
+        if (!match) return;
+        const parts = match[1].split('~');
+        const price = parseFloat(parts[3]);
+        const name = parts[1];
+        document.querySelectorAll(`[data-code="${code}"]`).forEach(card => {
+          const shares = parseFloat(card.getAttribute('data-shares'));
+          const value = (price * shares).toFixed(2);
+          card.querySelector('.price').textContent = `现价 ¥${price}`;
+          card.querySelector('.value').textContent = `市值 ¥${value}`;
+        });
+      });
+    });
+}
+setInterval(fetchStockPrices, 60000); // 每分钟刷新
+document.querySelector('[data-tab="assets"]').addEventListener('click', () => {
+  setTimeout(() => {
+    loadAssets();
+    fetchStockPrices();
+  }, 100);
+});
 </script>
   <meta charset="UTF-8">
   <title>极简理财 - 记账功能</title>
@@ -442,6 +530,8 @@ function updateBudgetBar() {
       <option value="储蓄">储蓄</option>
       <option value="投资">投资</option>
       <option value="数字资产">数字资产</option>
+    <option value="股票">股票</option>
+    <option value="基金">基金</option>
     </select>
     <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">添加资产</button>
   </form>
@@ -679,7 +769,12 @@ document.getElementById('debtForm').addEventListener('submit', function (e) {
   const category = document.getElementById('debtCategory').value;
   if (!name || !amount) return alert('请输入完整负债信息');
   const data = JSON.parse(localStorage.getItem('debts') || '[]');
-  data.push({ name, amount, category });
+  let code = "";
+  if (category === "股票" || category === "基金") {
+    code = prompt("请输入股票/基金代码（如 sh600519, usAAPL, hk0700, f110011）", "");
+    if (!code) return alert("股票或基金必须填写代码");
+  }
+  data.push({ name, amount, category, code });
   localStorage.setItem('debts', JSON.stringify(data));
   this.reset();
   loadDebts();
@@ -708,7 +803,17 @@ function loadAssets() {
     summary[asset.category] = (summary[asset.category] || 0) + parseFloat(asset.amount);
     const card = document.createElement('div');
     card.className = 'bg-white shadow rounded-xl p-4 border-l-4 border-blue-500';
-    card.innerHTML = `<strong>${asset.name}</strong><br>¥${parseFloat(asset.amount).toFixed(2)}<br><small>${asset.category}</small><br><button onclick="deleteAsset(${index})" style='margin-top:5px;'>🗑 删除</button>`;
+    if (asset.category === '股票' || asset.category === '基金') {
+      card.setAttribute('data-code', (asset.code || '').toLowerCase());
+      card.setAttribute('data-shares', asset.amount);
+      card.innerHTML = `<strong>${asset.name}</strong>
+        <br><span class="price text-sm text-gray-600">正在加载价格...</span>
+        <br><span class="value font-semibold text-blue-600">市值 --</span>
+        <br><small>${asset.category} · ${asset.code}</small>
+        <br><button onclick="deleteAsset(${index})" class="mt-2 text-red-600 hover:underline text-sm">🗑 删除</button>`;
+    } else {
+      card.innerHTML = `<strong>${asset.name}</strong><br>¥${parseFloat(asset.amount).toFixed(2)}<br><small>${asset.category}</small><br><button onclick="deleteAsset(${index})" class="mt-2 text-red-600 hover:underline text-sm">🗑 删除</button>`;
+    } onclick="deleteAsset(${index})" style='margin-top:5px;'>🗑 删除</button>`;
     container.appendChild(card);
   });
 
@@ -740,7 +845,12 @@ document.getElementById('assetForm').addEventListener('submit', function (e) {
   const category = document.getElementById('assetCategory').value;
   if (!name || !amount) return alert('请输入完整资产信息');
   const data = JSON.parse(localStorage.getItem('assets') || '[]');
-  data.push({ name, amount, category });
+  let code = "";
+  if (category === "股票" || category === "基金") {
+    code = prompt("请输入股票/基金代码（如 sh600519, usAAPL, hk0700, f110011）", "");
+    if (!code) return alert("股票或基金必须填写代码");
+  }
+  data.push({ name, amount, category, code });
   localStorage.setItem('assets', JSON.stringify(data));
   this.reset();
   loadAssets();
@@ -887,6 +997,40 @@ function updateBudgetBar() {
   bar.textContent = `¥${expenses.toFixed(2)} / ¥${budget}`;
   bar.style.backgroundColor = percent > 80 ? '#f44336' : '#165DFF';
 }
+
+function fetchStockPrices() {
+  const data = JSON.parse(localStorage.getItem('assets') || '[]');
+  const codes = data.filter(a => a.category === '股票' || a.category === '基金')
+    .map(a => a.code?.toLowerCase()).filter(Boolean);
+
+  if (codes.length === 0) return;
+
+  const url = 'https://qt.gtimg.cn/q=' + codes.join(',');
+  fetch(url)
+    .then(res => res.text())
+    .then(text => {
+      codes.forEach(code => {
+        const match = text.match(new RegExp(`v_${code}=\"(.*?)\";`));
+        if (!match) return;
+        const parts = match[1].split('~');
+        const price = parseFloat(parts[3]);
+        const name = parts[1];
+        document.querySelectorAll(`[data-code="${code}"]`).forEach(card => {
+          const shares = parseFloat(card.getAttribute('data-shares'));
+          const value = (price * shares).toFixed(2);
+          card.querySelector('.price').textContent = `现价 ¥${price}`;
+          card.querySelector('.value').textContent = `市值 ¥${value}`;
+        });
+      });
+    });
+}
+setInterval(fetchStockPrices, 60000); // 每分钟刷新
+document.querySelector('[data-tab="assets"]').addEventListener('click', () => {
+  setTimeout(() => {
+    loadAssets();
+    fetchStockPrices();
+  }, 100);
+});
 </script>
 </body>
 </html>
