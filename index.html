@@ -1,0 +1,1064 @@
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>极简理财 - 财务管理APP</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+  
+  <!-- Tailwind 配置 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#165DFF',
+            success: '#00B42A',
+            danger: '#F53F3F',
+            warning: '#FF7D00',
+            dark: '#1D2129',
+            'dark-light': '#4E5969',
+            'light-gray': '#C9CDD4',
+            'ultra-light': '#F2F3F5'
+          },
+          fontFamily: {
+            inter: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .card-shadow {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      }
+      .card-hover {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+      .card-hover:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+      }
+      .number-animation {
+        transition: all 0.8s cubic-bezier(0.215, 0.610, 0.355, 1.000);
+      }
+      .pulse-indicator {
+        animation: pulse 2s infinite;
+      }
+      @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.6; }
+        100% { opacity: 1; }
+      }
+      .slide-in {
+        animation: slideIn 0.5s ease forwards;
+      }
+      @keyframes slideIn {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+      .fade-in {
+        animation: fadeIn 0.5s ease forwards;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      .content-auto {
+        content-visibility: auto;
+      }
+      .number-transition {
+        transition: all 1s ease-out;
+      }
+      .chart-container {
+        position: relative;
+        height: 100%;
+        width: 100%;
+      }
+      .calendar-day {
+        aspect-ratio: 1/1;
+        border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+      }
+      .calendar-day::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background-color: transparent;
+        transition: background-color 0.3s ease;
+      }
+      .calendar-day.has-income::before { background-color: #00B42A; }
+      .calendar-day.has-expense::before { background-color: #F53F3F; }
+      .calendar-day.has-repayment::before { background-color: #165DFF; }
+      .calendar-day.current-day::before { background-color: #165DFF; }
+      .calendar-day:hover {
+        transform: translateY(-5px) scale(1.05);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        z-index: 10;
+      }
+      .event-dot {
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        display: inline-block;
+        margin: 0 1px;
+      }
+      .tooltip-animation {
+        transition: all 0.2s ease-out;
+      }
+      .calendar-header {
+        position: relative;
+        z-index: 10;
+      }
+      .calendar-body {
+        position: relative;
+        z-index: 5;
+      }
+      .month-navigation {
+        transition: all 0.3s ease;
+      }
+      .month-navigation:hover {
+        transform: scale(1.1);
+      }
+      .calendar-day-number {
+        font-size: 1rem;
+        font-weight: 500;
+        margin-bottom: 2px;
+      }
+      .calendar-day-events {
+        display: flex;
+        justify-content: center;
+        gap: 2px;
+        margin-top: 2px;
+      }
+      .gradient-bg {
+        background: linear-gradient(135deg, rgba(22, 93, 255, 0.03) 0%, rgba(0, 180, 42, 0.02) 100%);
+      }
+      .calendar-day-content {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 2px 4px;
+        text-align: center;
+        transition: all 0.3s ease;
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      .calendar-day:hover .calendar-day-content {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .calendar-day-amount {
+        font-size: 0.75rem;
+        font-weight: 500;
+      }
+      .calendar-day-type {
+        font-size: 0.65rem;
+        color: #4E5969;
+      }
+      .income-day {
+        background-color: rgba(0, 180, 42, 0.05);
+      }
+      .expense-day {
+        background-color: rgba(245, 63, 63, 0.05);
+      }
+      .repayment-day {
+        background-color: rgba(22, 93, 255, 0.05);
+      }
+      .calendar-day-today {
+        background-color: rgba(22, 93, 255, 0.1);
+        border: 1px solid #165DFF;
+      }
+      .calendar-day-today .calendar-day-number {
+        color: #165DFF;
+        font-weight: 700;
+      }
+      .calendar-day-weekend {
+        color: #F53F3F;
+      }
+      .calendar-transition {
+        transition: all 0.5s ease-out;
+      }
+      .financial-stats-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+      .financial-stats-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+      }
+      .income-gradient {
+        background: linear-gradient(135deg, rgba(0, 180, 42, 0.05) 0%, rgba(0, 180, 42, 0.01) 100%);
+      }
+      .expense-gradient {
+        background: linear-gradient(135deg, rgba(245, 63, 63, 0.05) 0%, rgba(245, 63, 63, 0.01) 100%);
+      }
+      .balance-gradient {
+        background: linear-gradient(135deg, rgba(22, 93, 255, 0.05) 0%, rgba(22, 93, 255, 0.01) 100%);
+      }
+      .calendar-day-details {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background-color: white;
+        border-radius: 8px;
+        padding: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        z-index: 20;
+        transform: translateY(10px);
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+      }
+      .calendar-day:hover .calendar-day-details {
+        transform: translateY(5px);
+        opacity: 1;
+        visibility: visible;
+      }
+      .calendar-day-details-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 2px 0;
+        border-bottom: 1px solid #F2F3F5;
+      }
+      .calendar-day-details-item:last-child {
+        border-bottom: none;
+      }
+      .modal {
+        position: fixed;
+        inset: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 100;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+      }
+      .modal.active {
+        opacity: 1;
+        visibility: visible;
+      }
+      .modal-content {
+        background-color: white;
+        border-radius: 16px;
+        max-width: 400px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        transform: scale(0.9);
+        transition: transform 0.3s ease;
+      }
+      .modal.active .modal-content {
+        transform: scale(1);
+      }
+      .budget-progress-bar {
+        height: 6px;
+        border-radius: 3px;
+        overflow: hidden;
+        background-color: #F2F3F5;
+      }
+      .budget-progress {
+        height: 100%;
+        border-radius: 3px;
+        transition: width 1s ease-out;
+      }
+      .transaction-item {
+        transition: all 0.2s ease;
+      }
+      .transaction-item:hover {
+        background-color: rgba(22, 93, 255, 0.05);
+      }
+      .calendar-day.selected {
+        transform: scale(1.05);
+        box-shadow: 0 5px 15px rgba(22, 93, 255, 0.2);
+        border: 2px solid #165DFF;
+      }
+      .quick-add-btn {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        z-index: 50;
+        transition: transform 0.3s ease;
+      }
+      .quick-add-btn:hover {
+        transform: scale(1.1);
+      }
+      .category-pill {
+        display: inline-block;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 500;
+      }
+      .chart-tooltip {
+        position: absolute;
+        background-color: white;
+        padding: 8px 12px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        z-index: 100;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s ease, visibility 0.2s ease;
+      }
+      .chart-tooltip.active {
+        opacity: 1;
+        visibility: visible;
+      }
+      .financial-trend-chart {
+        height: 150px;
+      }
+      .number-pad {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        padding: 10px;
+      }
+      .number-key {
+        aspect-ratio: 1/1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 24px;
+        font-weight: 500;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .number-key:hover {
+        background-color: rgba(22, 93, 255, 0.1);
+      }
+      .category-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 15px;
+      }
+      .category-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 0;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .category-item:hover {
+        background-color: rgba(22, 93, 255, 0.05);
+      }
+      .category-item.active {
+        background-color: rgba(22, 93, 255, 0.1);
+      }
+      .category-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+      .input-field {
+        border: none;
+        border-bottom: 1px solid #F2F3F5;
+        padding: 8px 0;
+        width: 100%;
+        font-size: 16px;
+        outline: none;
+        transition: border-color 0.2s ease;
+      }
+      .input-field:focus {
+        border-color: #165DFF;
+      }
+      .form-step {
+        display: none;
+      }
+      .form-step.active {
+        display: block;
+      }
+      .slide-up {
+        animation: slideUp 0.3s ease forwards;
+      }
+      @keyframes slideUp {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+      .slide-down {
+        animation: slideDown 0.3s ease forwards;
+      }
+      @keyframes slideDown {
+        from { transform: translateY(0); opacity: 1; }
+        to { transform: translateY(20px); opacity: 0; }
+      }
+      .asset-card {
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+      }
+      .asset-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: all 0.6s ease;
+      }
+      .asset-card:hover::before {
+        left: 100%;
+      }
+      .hover-scale {
+        transition: transform 0.3s ease;
+      }
+      .hover-scale:hover {
+        transform: scale(1.05);
+      }
+      .stat-card {
+        transition: all 0.3s ease;
+      }
+      .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+      }
+      .number-counter {
+        display: inline-block;
+      }
+      .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .card-header .action-btn {
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+      .card:hover .card-header .action-btn {
+        opacity: 1;
+      }
+      .tab-btn {
+        position: relative;
+        transition: all 0.3s ease;
+      }
+      .tab-btn::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background-color: #165DFF;
+        transition: width 0.3s ease;
+      }
+      .tab-btn:hover::after {
+        width: 100%;
+      }
+      .tab-btn.active::after {
+        width: 100%;
+      }
+      .scroll-indicator {
+        position: absolute;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        animation: bounce 2s infinite;
+      }
+      @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% { transform: translateY(0) translateX(-50%); }
+        40% { transform: translateY(-10px) translateX(-50%); }
+        60% { transform: translateY(-5px) translateX(-50%); }
+      }
+    }
+  </style>
+</head>
+
+<body class="font-inter bg-ultra-light text-dark min-h-screen flex flex-col">
+  <!-- 顶部导航栏 -->
+  <header class="bg-white sticky top-0 z-50 shadow-sm transition-all duration-300" id="mainHeader">
+    <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <i class="fa fa-line-chart text-primary text-2xl"></i>
+        <h1 class="text-xl font-bold">极简理财</h1>
+      </div>
+      
+      <div class="flex items-center space-x-4">
+        <button class="relative text-dark-light hover:text-primary transition-colors" id="notificationBtn">
+          <i class="fa fa-bell-o text-xl"></i>
+          <span class="absolute -top-1 -right-1 bg-danger text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">3</span>
+        </button>
+        <button class="relative text-dark-light hover:text-primary transition-colors" id="settingsBtn">
+          <i class="fa fa-cog text-xl"></i>
+        </button>
+        <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary hover-scale">
+          <span class="font-medium">简</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 主内容区 -->
+  <main class="flex-grow container mx-auto px-4 py-6">
+    <!-- 导航标签 -->
+    <div class="mb-6">
+      <div class="flex border-b border-light-gray/30 overflow-x-auto">
+        <button class="px-4 py-2 text-primary font-medium border-b-2 border-primary whitespace-nowrap tab-btn active" data-tab="dashboard">
+          <i class="fa fa-dashboard mr-2"></i>总览
+        </button>
+        <button class="px-4 py-2 text-dark-light hover:text-primary transition-colors whitespace-nowrap tab-btn" data-tab="assets">
+          <i class="fa fa-money mr-2"></i>资产
+        </button>
+        <button class="px-4 py-2 text-dark-light hover:text-primary transition-colors whitespace-nowrap tab-btn" data-tab="liabilities">
+          <i class="fa fa-credit-card mr-2"></i>负债
+        </button>
+        <button class="px-4 py-2 text-dark-light hover:text-primary transition-colors whitespace-nowrap tab-btn" data-tab="reports">
+          <i class="fa fa-bar-chart mr-2"></i>报表
+        </button>
+        <button class="px-4 py-2 text-dark-light hover:text-primary transition-colors whitespace-nowrap tab-btn" data-tab="profile">
+          <i class="fa fa-user mr-2"></i>我的
+        </button>
+      </div>
+    </div>
+
+    <!-- 首页 - 总览 -->
+    <section id="dashboard" class="tab-content">
+      <!-- 总资产卡片和理财月历 -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+        <div class="lg:col-span-7 bg-white rounded-xl p-6 card-shadow asset-card slide-in">
+          <div class="card-header mb-6">
+            <h2 class="text-xl font-bold">总资产</h2>
+            <div class="flex space-x-3">
+              <button class="text-primary text-sm hover:underline action-btn flex items-center">
+                <i class="fa fa-bar-chart mr-1"></i> 详情
+              </button>
+              <button class="text-primary text-sm hover:underline action-btn flex items-center">
+                <i class="fa fa-pie-chart mr-1"></i> 分析
+              </button>
+            </div>
+          </div>
+          
+          <div class="flex items-end mb-6">
+            <span class="text-4xl font-bold number-animation number-transition number-counter" id="totalAssets">¥1,258,634.25</span>
+            <div class="ml-4">
+              <div class="text-success flex items-center text-sm">
+                <i class="fa fa-arrow-up mr-1"></i> 2.3% <span class="text-dark-light ml-1">本周</span>
+              </div>
+              <div class="text-dark-light text-sm mt-1">+¥12,345.67 今日</div>
+            </div>
+          </div>
+          
+          <div class="grid grid-cols-3 gap-4 mb-6">
+            <div class="bg-ultra-light rounded-lg p-4">
+              <div class="text-dark-light text-xs mb-1">活期存款</div>
+              <div class="font-medium">¥286,345.25</div>
+            </div>
+            <div class="bg-ultra-light rounded-lg p-4">
+              <div class="text-dark-light text-xs mb-1">定期存款</div>
+              <div class="font-medium">¥500,000.00</div>
+            </div>
+            <div class="bg-ultra-light rounded-lg p-4">
+              <div class="text-dark-light text-xs mb-1">投资</div>
+              <div class="font-medium">¥472,289.00</div>
+            </div>
+          </div>
+          
+          <div class="mt-6 h-56">
+            <canvas id="assetTrendChart"></canvas>
+          </div>
+        </div>
+        
+        <!-- 理财月历 -->
+        <div class="lg:col-span-5 bg-white rounded-xl p-6 card-shadow card-hover slide-in gradient-bg" style="animation-delay: 0.1s">
+          <div class="calendar-header">
+            <div class="flex justify-between items-center mb-6">
+              <h2 class="text-xl font-bold">理财月历</h2>
+              <div class="flex space-x-2">
+                <button class="p-2 rounded-full hover:bg-ultra-light transition-colors month-navigation" id="prevMonth">
+                  <i class="fa fa-chevron-left text-dark-light"></i>
+                </button>
+                <button class="p-2 rounded-full hover:bg-ultra-light transition-colors month-navigation" id="nextMonth">
+                  <i class="fa fa-chevron-right text-dark-light"></i>
+                </button>
+              </div>
+            </div>
+            
+            <!-- 月度财务概览 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+              <div class="bg-white rounded-xl p-4 financial-stats-card income-gradient stat-card">
+                <div class="text-dark-light text-xs">收入</div>
+                <div class="text-success font-medium mt-1 flex justify-between items-center">
+                  <span>¥28,654</span>
+                  <div class="flex items-center">
+                    <i class="fa fa-arrow-up text-xs mr-1"></i>
+                    <span class="text-xs">8.5%</span>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-white rounded-xl p-4 financial-stats-card expense-gradient stat-card">
+                <div class="text-dark-light text-xs">支出</div>
+                <div class="text-danger font-medium mt-1 flex justify-between items-center">
+                  <span>¥16,325</span>
+                  <div class="flex items-center">
+                    <i class="fa fa-arrow-down text-xs mr-1"></i>
+                    <span class="text-xs">3.2%</span>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-white rounded-xl p-4 financial-stats-card balance-gradient stat-card">
+                <div class="text-dark-light text-xs">结余</div>
+                <div class="text-primary font-medium mt-1 flex justify-between items-center">
+                  <span>¥12,328</span>
+                  <i class="fa fa-balance-scale text-xs"></i>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 月度趋势图 -->
+            <div class="bg-white rounded-xl p-4 mb-6 financial-stats-card stat-card">
+              <div class="text-dark-light text-xs mb-2">收支趋势</div>
+              <div class="financial-trend-chart">
+                <canvas id="monthlyTrendChart"></canvas>
+              </div>
+            </div>
+            
+            <div class="mb-4 text-center">
+              <h3 class="font-bold text-lg" id="currentMonth">2025年6月</h3>
+            </div>
+            
+            <div class="grid grid-cols-7 gap-1 mb-3">
+              <div class="text-center text-dark-light text-sm py-2 font-medium">日</div>
+              <div class="text-center text-dark-light text-sm py-2 font-medium">一</div>
+              <div class="text-center text-dark-light text-sm py-2 font-medium">二</div>
+              <div class="text-center text-dark-light text-sm py-2 font-medium">三</div>
+              <div class="text-center text-dark-light text-sm py-2 font-medium">四</div>
+              <div class="text-center text-dark-light text-sm py-2 font-medium">五</div>
+              <div class="text-center text-dark-light text-sm py-2 font-medium">六</div>
+            </div>
+          </div>
+          
+          <div class="calendar-body relative overflow-hidden">
+            <div class="grid grid-cols-7 gap-2 calendar-transition" id="calendarDays">
+              <!-- 日历内容将通过JavaScript动态生成 -->
+            </div>
+          </div>
+          
+          <!-- 优化后的图例布局 -->
+          <div class="mt-4 p-3 bg-ultra-light/50 rounded-lg">
+            <div class="flex flex-wrap justify-center gap-x-6 gap-y-2">
+              <div class="flex items-center">
+                <div class="w-3 h-3 rounded-full bg-success mr-2"></div>
+                <span class="text-sm text-dark-light">收入</span>
+              </div>
+              <div class="flex items-center">
+                <div class="w-3 h-3 rounded-full bg-danger mr-2"></div>
+                <span class="text-sm text-dark-light">支出</span>
+              </div>
+              <div class="flex items-center">
+                <div class="w-3 h-3 rounded-full bg-primary mr-2"></div>
+                <span class="text-sm text-dark-light">还款日</span>
+              </div>
+              <div class="flex items-center">
+                <div class="w-3 h-3 rounded-full bg-primary/70 border border-primary mr-2"></div>
+                <span class="text-sm text-dark-light">今天</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 快捷操作区 -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <button class="bg-white rounded-xl p-6 card-shadow hover-scale slide-in" style="animation-delay: 0.2s">
+          <div class="flex items-center">
+            <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary mr-4">
+              <i class="fa fa-exchange text-xl"></i>
+            </div>
+            <div>
+              <h3 class="font-medium">账户转账</h3>
+              <p class="text-dark-light text-sm mt-1">在不同账户间快速转账</p>
+            </div>
+          </div>
+        </button>
+        
+        <button class="bg-white rounded-xl p-6 card-shadow hover-scale slide-in" style="animation-delay: 0.3s">
+          <div class="flex items-center">
+            <div class="w-12 h-12 rounded-full bg-warning/10 flex items-center justify-center text-warning mr-4">
+              <i class="fa fa-credit-card text-xl"></i>
+            </div>
+            <div>
+              <h3 class="font-medium">信用卡还款</h3>
+              <p class="text-dark-light text-sm mt-1">及时还款，避免逾期</p>
+            </div>
+          </div>
+        </button>
+        
+        <button class="bg-white rounded-xl p-6 card-shadow hover-scale slide-in" style="animation-delay: 0.4s">
+          <div class="flex items-center">
+            <div class="w-12 h-12 rounded-full bg-success/10 flex items-center justify-center text-success mr-4">
+              <i class="fa fa-line-chart text-xl"></i>
+            </div>
+            <div>
+              <h3 class="font-medium">投资组合</h3>
+              <p class="text-dark-light text-sm mt-1">查看和管理您的投资</p>
+            </div>
+          </div>
+        </button>
+      </div>
+
+      <!-- 预算进度 -->
+      <div class="bg-white rounded-xl p-6 card-shadow card-hover slide-in mb-6" style="animation-delay: 0.15s">
+        <div class="card-header mb-6">
+          <h2 class="text-xl font-bold">本月预算进度</h2>
+          <button class="text-primary text-sm hover:underline action-btn flex items-center">
+            <i class="fa fa-cog mr-1"></i> 设置预算
+          </button>
+        </div>
+        
+        <div class="space-y-5">
+          <div>
+            <div class="flex justify-between mb-2">
+              <div class="flex items-center">
+                <div class="w-3 h-3 rounded-full bg-warning mr-2"></div>
+                <span class="font-medium">餐饮</span>
+              </div>
+              <span class="text-dark-light text-sm">¥2,550 / ¥3,000</span>
+            </div>
+            <div class="budget-progress-bar">
+              <div class="budget-progress bg-warning" style="width: 85%"></div>
+            </div>
+          </div>
+          
+          <div>
+            <div class="flex justify-between mb-2">
+              <div class="flex items-center">
+                <div class="w-3 h-3 rounded-full bg-danger mr-2"></div>
+                <span class="font-medium">购物</span>
+              </div>
+              <span class="text-dark-light text-sm">¥4,825 / ¥5,000</span>
+            </div>
+            <div class="budget-progress-bar">
+              <div class="budget-progress bg-danger" style="width: 96%"></div>
+            </div>
+          </div>
+          
+          <div>
+            <div class="flex justify-between mb-2">
+              <div class="flex items-center">
+                <div class="w-3 h-3 rounded-full bg-success mr-2"></div>
+                <span class="font-medium">交通</span>
+              </div>
+              <span class="text-dark-light text-sm">¥650 / ¥1,000</span>
+            </div>
+            <div class="budget-progress-bar">
+              <div class="budget-progress bg-success" style="width: 65%"></div>
+            </div>
+          </div>
+          
+          <div>
+            <div class="flex justify-between mb-2">
+              <div class="flex items-center">
+                <div class="w-3 h-3 rounded-full bg-primary mr-2"></div>
+                <span class="font-medium">娱乐</span>
+              </div>
+              <span class="text-dark-light text-sm">¥1,200 / ¥2,000</span>
+            </div>
+            <div class="budget-progress-bar">
+              <div class="budget-progress bg-primary" style="width: 60%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 本月收支概览 -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div class="bg-white rounded-xl p-6 card-shadow card-hover slide-in" style="animation-delay: 0.5s">
+          <div class="card-header mb-6">
+            <h2 class="text-xl font-bold">本月收入</h2>
+            <button class="text-primary text-sm hover:underline action-btn flex items-center">
+              <i class="fa fa-list mr-1"></i> 查看详情
+            </button>
+          </div>
+          <div class="flex items-end mb-6">
+            <span class="text-3xl font-bold number-animation number-counter">¥28,654.32</span>
+            <span class="text-dark-light ml-2 mb-0.5">较上月</span>
+          </div>
+          <div class="mt-6 grid grid-cols-3 gap-3">
+            <div class="bg-ultra-light rounded-lg p-4 text-center">
+              <div class="text-dark-light text-xs mb-1">工资</div>
+              <div class="font-medium">¥25,000</div>
+            </div>
+            <div class="bg-ultra-light rounded-lg p-4 text-center">
+              <div class="text-dark-light text-xs mb-1">投资</div>
+              <div class="font-medium">¥3,254</div>
+            </div>
+            <div class="bg-ultra-light rounded-lg p-4 text-center">
+              <div class="text-dark-light text-xs mb-1">其他</div>
+              <div class="font-medium">¥400.32</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl p-6 card-shadow card-hover slide-in" style="animation-delay: 0.6s">
+          <div class="card-header mb-6">
+            <h2 class="text-xl font-bold">本月支出</h2>
+            <button class="text-primary text-sm hover:underline action-btn flex items-center">
+              <i class="fa fa-list mr-1"></i> 查看详情
+            </button>
+          </div>
+          <div class="flex items-end mb-6">
+            <span class="text-3xl font-bold number-animation number-counter">¥16,325.78</span>
+            <span class="text-dark-light ml-2 mb-0.5">较上月</span>
+          </div>
+          <div class="mt-6 grid grid-cols-3 gap-3">
+            <div class="bg-ultra-light rounded-lg p-4 text-center">
+              <div class="text-dark-light text-xs mb-1">生活</div>
+              <div class="font-medium">¥6,500</div>
+            </div>
+            <div class="bg-ultra-light rounded-lg p-4 text-center">
+              <div class="text-dark-light text-xs mb-1">购物</div>
+              <div class="font-medium">¥4,825</div>
+            </div>
+            <div class="bg-ultra-light rounded-lg p-4 text-center">
+              <div class="text-dark-light text-xs mb-1">其他</div>
+              <div class="font-medium">¥4,900.78</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 消息中心 -->
+      <div class="bg-white rounded-xl p-6 card-shadow card-hover slide-in" style="animation-delay: 0.7s">
+        <div class="card-header mb-6">
+          <h2 class="text-xl font-bold">消息中心</h2>
+          <button class="text-primary text-sm hover:underline action-btn flex items-center">
+            <i class="fa fa-angle-right mr-1"></i> 查看全部
+          </button>
+        </div>
+        
+        <div class="space-y-4">
+          <div class="flex items-start p-4 rounded-xl bg-ultra-light/50 hover:bg-ultra-light transition-colors">
+            <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary mr-4 flex-shrink-0">
+              <i class="fa fa-bell-o"></i>
+            </div>
+            <div class="flex-grow">
+              <div class="flex justify-between">
+                <h3 class="font-medium">信用卡还款提醒</h3>
+                <span class="text-dark-light text-xs">10分钟前</span>
+              </div>
+              <p class="text-dark-light text-sm mt-1">您的招商银行信用卡（****5678）将于3天后到期，需还款¥3,562.89</p>
+            </div>
+          </div>
+          
+          <div class="flex items-start p-4 rounded-xl bg-ultra-light/50 hover:bg-ultra-light transition-colors">
+            <div class="w-10 h-10 rounded-full bg-success/10 flex items-center justify-center text-success mr-4 flex-shrink-0">
+              <i class="fa fa-line-chart"></i>
+            </div>
+            <div class="flex-grow">
+              <div class="flex justify-between">
+                <h3 class="font-medium">投资收益提醒</h3>
+                <span class="text-dark-light text-xs">2小时前</span>
+              </div>
+              <p class="text-dark-light text-sm mt-1">您的基金组合（易方达蓝筹精选混合）今日收益+¥245</p>
+            </div>
+          </div>
+          
+          <div class="flex items-start p-4 rounded-xl bg-ultra-light/50 hover:bg-ultra-light transition-colors">
+            <div class="w-10 h-10 rounded-full bg-warning/10 flex items-center justify-center text-warning mr-4 flex-shrink-0">
+              <i class="fa fa-exclamation-triangle"></i>
+            </div>
+            <div class="flex-grow">
+              <div class="flex justify-between">
+                <h3 class="font-medium">预算预警</h3>
+                <span class="text-dark-light text-xs">昨天</span>
+              </div>
+              <p class="text-dark-light text-sm mt-1">您的购物预算已使用96%，请注意控制支出</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 快速添加按钮 -->
+  <div class="quick-add-btn">
+    <button class="w-14 h-14 rounded-full bg-primary text-white shadow-lg flex items-center justify-center hover:scale-110 transition-all duration-300" id="quickAddBtn">
+      <i class="fa fa-plus text-xl"></i>
+    </button>
+  </div>
+
+  <!-- 快速记账模态框 -->
+  <div class="modal" id="quickAddModal">
+    <div class="modal-content">
+      <div class="p-6">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-xl font-bold">快记一笔</h3>
+          <button class="text-dark-light hover:text-dark" id="closeModalBtn">
+            <i class="fa fa-times text-xl"></i>
+          </button>
+        </div>
+        
+        <div class="form-step active" id="step1">
+          <div class="mb-6">
+            <div class="flex space-x-4 mb-4">
+              <button class="flex-1 py-3 rounded-lg bg-primary text-white font-medium" id="expenseBtn">支出</button>
+              <button class="flex-1 py-3 rounded-lg bg-ultra-light text-dark-light font-medium" id="incomeBtn">收入</button>
+            </div>
+            
+            <div class="category-grid">
+              <div class="category-item active" data-category="餐饮">
+                <div class="category-icon bg-danger/10 text-danger">
+                  <i class="fa fa-cutlery"></i>
+                </div>
+                <span class="text-sm">餐饮</span>
+              </div>
+              <div class="category-item" data-category="购物">
+                <div class="category-icon bg-warning/10 text-warning">
+                  <i class="fa fa-shopping-bag"></i>
+                </div>
+                <span class="text-sm">购物</span>
+              </div>
+              <div class="category-item" data-category="交通">
+                <div class="category-icon bg-primary/10 text-primary">
+                  <i class="fa fa-car"></i>
+                </div>
+                <span class="text-sm">交通</span>
+              </div>
+              <div class="category-item" data-category="娱乐">
+                <div class="category-icon bg-success/10 text-success">
+                  <i class="fa fa-film"></i>
+                </div>
+                <span class="text-sm">娱乐</span>
+              </div>
+              <div class="category-item" data-category="住房">
+                <div class="category-icon bg-dark/10 text-dark">
+                  <i class="fa fa-home"></i>
+                </div>
+                <span class="text-sm">住房</span>
+              </div>
+              <div class="category-item" data-category="医疗">
+                <div class="category-icon bg-danger/10 text-danger">
+                  <i class="fa fa-medkit"></i>
+                </div>
+                <span class="text-sm">医疗</span>
+              </div>
+              <div class="category-item" data-category="教育">
+                <div class="category-icon bg-primary/10 text-primary">
+                  <i class="fa fa-book"></i>
+                </div>
+                <span class="text-sm">教育</span>
+              </div>
+              <div class="category-item" data-category="其他">
+                <div class="category-icon bg-dark-light/10 text-dark-light">
+                  <i class="fa fa-ellipsis-h"></i>
+                </div>
+                <span class="text-sm">其他</span>
+              </div>
+            </div>
+          </div>
+          
+          <button class="w-full py-3 rounded-lg bg-primary text-white font-medium" id="nextStepBtn">下一步</button>
+        </div>
+        
+        <div class="form-step" id="step2">
+          <div class="mb-6">
+            <div class="text-center mb-4">
+              <span class="text-5xl font-bold" id="amountDisplay">¥0.00</span>
+            </div>
+            
+            <div class="number-pad">
+              <div class="number-key" data-number="1">1</div>
+              <div class="number-key" data-number="2">2</div>
+              <div class="number-key" data-number="3">3</div>
+              <div class="number-key" data-number="4">4</div>
+              <div class="number-key" data-number="5">5</div>
+              <div class="number-key" data-number="6">6</div>
+              <div class="number-key" data-number="7">7</div>
+              <div class="number-key" data-number="8">8</div>
+              <div class="number-key" data-number="9">9</div>
+              <div class="number-key" data-number="00">00</div>
+              <div class="number-key" data-number="0">0</div>
+              <div class="number-key" data-number="del">
+                <i class="fa fa-backspace"></i>
+              </div>
+            </div>
+          </div>
+          
+          <div class="flex space-x-4">
+            <button class="flex-1 py-3 rounded-lg bg-ultra-light text-dark font-medium" id="prevStepBtn">上一步</button>
+            <button class="flex-1 py-3 rounded-lg bg-primary text-white font-medium" id="saveTransactionBtn">保存</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 页面加载完成后执行
+    document.addEventListener('DOMContentLoaded', function() {
+      // 初始化图表
+      initCharts();
+      
+      // 初始化日历
+      initCalendar();
+      
+      // 初始化快速记账模态框
+      initQuickAddModal();
+      
+      // 初始化标签切换
+      initTabSwitching();
+      
+      // 监听滚动事件，改变导航栏样式
+      window.addEventListener('scroll', function() {
+        const header = document.getElementById('mainHeader');
+        if (window.scrollY > 10) {
+          header.classList.add('shadow-md');
+        } else {
+          header.classList.remove('shadow-md');
+        }
+      });
+      
+      // 数字滚动动画
+      initNumberCounters();
+    });
+    
+    // 初始化图表
+    function initCharts() {
+      // 总资产趋势图
+      const assetTrendCtx = document.getElementById('assetTrendChart').getContext('2d');
+      const assetTrendChart = new Chart(assetTrendCtx, {
+        type: 'line',
+        data: {
+          labels: ['1月', '2月', '3月', '4月', '5月', '6月'],
+          datasets: [{
+            label: '总资产 (万元)',
+            data: [118, 120, 122, 124, 125, 126],
+            borderColor: '#165DFF',
+            backgroundColor: 'rgba(22, 93, 255, 0.1)',
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: '#FFFFFF',
+            pointBorderColor: '#165DFF',
+            pointBorderWidth: 2,
+            pointRadius: 4,
+            pointHoverRadius: 6
+          }]
+        },
+        options: {
