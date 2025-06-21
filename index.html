@@ -38,7 +38,7 @@ function renderCharts() {
     data: {
       labels: catLabels,
       datasets: [
-        { label: '支出', data: expenseData, backgroundColor: 'rgba(255,99,132,0.6)' },
+        { label: '支出', data: expenseData, backgroundColor: '#ef4444' },
         { label: '收入', data: incomeData, backgroundColor: 'rgba(75,192,192,0.6)' }
       ]
     },
@@ -83,10 +83,7 @@ function loadDebts() {
   data.forEach((debt, index) => {
     summary[debt.category] = (summary[debt.category] || 0) + parseFloat(debt.amount);
     const card = document.createElement('div');
-    card.style.background = '#fff3f3';
-    card.style.padding = '10px';
-    card.style.borderRadius = '6px';
-    card.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
+    card.className = 'bg-white shadow rounded-xl p-4 border-l-4 border-red-500';
     card.innerHTML = `<strong>${debt.name}</strong><br>¥${parseFloat(debt.amount).toFixed(2)}<br><small>${debt.category}</small><br><button onclick="deleteDebt(${index})" style='margin-top:5px;'>🗑 删除</button>`;
     container.appendChild(card);
   });
@@ -100,7 +97,7 @@ function loadDebts() {
         datasets: [{
           label: '各类负债金额',
           data: Object.values(summary),
-          backgroundColor: 'rgba(255,99,132,0.6)'
+          backgroundColor: '#ef4444'
         }]
       },
       options: {
@@ -146,10 +143,7 @@ function loadAssets() {
     total += parseFloat(asset.amount);
     summary[asset.category] = (summary[asset.category] || 0) + parseFloat(asset.amount);
     const card = document.createElement('div');
-    card.style.background = '#f4f4f8';
-    card.style.padding = '10px';
-    card.style.borderRadius = '6px';
-    card.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
+    card.className = 'bg-white shadow rounded-xl p-4 border-l-4 border-blue-500';
     card.innerHTML = `<strong>${asset.name}</strong><br>¥${parseFloat(asset.amount).toFixed(2)}<br><small>${asset.category}</small><br><button onclick="deleteAsset(${index})" style='margin-top:5px;'>🗑 删除</button>`;
     container.appendChild(card);
   });
@@ -164,7 +158,7 @@ function loadAssets() {
         datasets: [{
           label: '各类资产金额',
           data: Object.values(summary),
-          backgroundColor: 'rgba(54,162,235,0.6)'
+          backgroundColor: '#3b82f6'
         }]
       },
       options: {
@@ -584,7 +578,7 @@ function renderCharts() {
     data: {
       labels: catLabels,
       datasets: [
-        { label: '支出', data: expenseData, backgroundColor: 'rgba(255,99,132,0.6)' },
+        { label: '支出', data: expenseData, backgroundColor: '#ef4444' },
         { label: '收入', data: incomeData, backgroundColor: 'rgba(75,192,192,0.6)' }
       ]
     },
@@ -629,10 +623,7 @@ function loadDebts() {
   data.forEach((debt, index) => {
     summary[debt.category] = (summary[debt.category] || 0) + parseFloat(debt.amount);
     const card = document.createElement('div');
-    card.style.background = '#fff3f3';
-    card.style.padding = '10px';
-    card.style.borderRadius = '6px';
-    card.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
+    card.className = 'bg-white shadow rounded-xl p-4 border-l-4 border-red-500';
     card.innerHTML = `<strong>${debt.name}</strong><br>¥${parseFloat(debt.amount).toFixed(2)}<br><small>${debt.category}</small><br><button onclick="deleteDebt(${index})" style='margin-top:5px;'>🗑 删除</button>`;
     container.appendChild(card);
   });
@@ -646,7 +637,7 @@ function loadDebts() {
         datasets: [{
           label: '各类负债金额',
           data: Object.values(summary),
-          backgroundColor: 'rgba(255,99,132,0.6)'
+          backgroundColor: '#ef4444'
         }]
       },
       options: {
@@ -692,10 +683,7 @@ function loadAssets() {
     total += parseFloat(asset.amount);
     summary[asset.category] = (summary[asset.category] || 0) + parseFloat(asset.amount);
     const card = document.createElement('div');
-    card.style.background = '#f4f4f8';
-    card.style.padding = '10px';
-    card.style.borderRadius = '6px';
-    card.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
+    card.className = 'bg-white shadow rounded-xl p-4 border-l-4 border-blue-500';
     card.innerHTML = `<strong>${asset.name}</strong><br>¥${parseFloat(asset.amount).toFixed(2)}<br><small>${asset.category}</small><br><button onclick="deleteAsset(${index})" style='margin-top:5px;'>🗑 删除</button>`;
     container.appendChild(card);
   });
@@ -710,7 +698,7 @@ function loadAssets() {
         datasets: [{
           label: '各类资产金额',
           data: Object.values(summary),
-          backgroundColor: 'rgba(54,162,235,0.6)'
+          backgroundColor: '#3b82f6'
         }]
       },
       options: {
