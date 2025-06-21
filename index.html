@@ -218,7 +218,13 @@ function clearAll() {
 
 
 // ===== 页面标签切换逻辑 =====
-function showTab(id) {
+function showTab(id, el) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+  document.querySelectorAll('footer nav button').forEach(btn => btn.classList.remove('text-blue-600', 'font-bold'));
+  if (el) el.classList.add('text-blue-600', 'font-bold');
+  window.scrollTo({ top: 0 });
+}
   document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
   document.getElementById(id).classList.remove('hidden');
 
@@ -446,7 +452,13 @@ function clearAll() {
 
 
 // ===== 页面标签切换逻辑 =====
-function showTab(id) {
+function showTab(id, el) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+  document.querySelectorAll('footer nav button').forEach(btn => btn.classList.remove('text-blue-600', 'font-bold'));
+  if (el) el.classList.add('text-blue-600', 'font-bold');
+  window.scrollTo({ top: 0 });
+}
   document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
   document.getElementById(id).classList.remove('hidden');
 
@@ -555,12 +567,12 @@ function showTab(id) {
 </main>
 
 <footer class="fixed bottom-0 left-0 w-full bg-white border-t shadow-inner z-10">
-  <nav class="grid grid-cols-5 text-center text-sm text-gray-600">
-    <button onclick="showTab('dashboard')" class="py-2 hover:text-blue-600">首页</button>
-    <button onclick="showTab('assets')" class="py-2 hover:text-blue-600">资产</button>
-    <button onclick="showTab('debts')" class="py-2 hover:text-blue-600">负债</button>
-    <button onclick="showTab('reports')" class="py-2 hover:text-blue-600">报表</button>
-    <button onclick="showTab('profile')" class="py-2 hover:text-blue-600">我的</button>
+  <nav class="grid grid-cols-5 text-center text-base text-gray-600">
+    <button onclick="showTab('dashboard', this)" class="py-2 hover:text-blue-600">首页</button>
+    <button onclick="showTab('assets', this)" class="py-2 hover:text-blue-600">资产</button>
+    <button onclick="showTab('debts', this)" class="py-2 hover:text-blue-600">负债</button>
+    <button onclick="showTab('reports', this)" class="py-2 hover:text-blue-600">报表</button>
+    <button onclick="showTab('profile', this)" class="py-2 hover:text-blue-600">我的</button>
   </nav>
 </footer>
 
@@ -845,7 +857,13 @@ function clearAll() {
 
 
 // ===== 页面标签切换逻辑 =====
-function showTab(id) {
+function showTab(id, el) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+  document.querySelectorAll('footer nav button').forEach(btn => btn.classList.remove('text-blue-600', 'font-bold'));
+  if (el) el.classList.add('text-blue-600', 'font-bold');
+  window.scrollTo({ top: 0 });
+}
   document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
   document.getElementById(id).classList.remove('hidden');
 
