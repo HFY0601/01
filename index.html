@@ -367,7 +367,20 @@ function updateBudgetBar() {
   </nav>
   <main>
     <section id="dashboard" class="tab-content active">
-      <h2>理财月历</h2>
+<style>
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 768px) {
+    .dashboard-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+<div class="dashboard-grid">
+      <div><h2>理财月历</h2>
   <div id="calendarContainer" style="margin-bottom: 20px;">
     <div style="display: flex; justify-content: space-between; align-items: center;">
       <button onclick="changeMonth(-1)">◀ 上月</button>
@@ -383,7 +396,7 @@ function updateBudgetBar() {
   </div>
 </div>
   </div>
-  <h2>快速记账</h2>
+  </div><div><h2>快速记账</h2>
       <form id="entryForm">
         <select id="type">
           <option value="expense">支出</option>
@@ -401,7 +414,7 @@ function updateBudgetBar() {
         <button type="submit">保存记录</button>
       </form>
 
-      <h3>最近记录</h3>
+      </div></div><h3>最近记录</h3>
       <table id="recordTable">
         <thead>
           <tr>
