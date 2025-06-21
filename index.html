@@ -96,6 +96,61 @@ function deleteDebt(i) {
 
 loadDebts();
 
+
+// ===== 收支记录逻辑 =====
+document.getElementById('recordForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const type = document.getElementById('recordType').value;
+  const category = document.getElementById('recordCategory').value.trim();
+  const amount = parseFloat(document.getElementById('recordAmount').value);
+  const date = document.getElementById('recordDate').value;
+  if (!category || isNaN(amount) || !date) return alert("请输入完整记录");
+
+  const tx = JSON.parse(localStorage.getItem('transactions') || '[]');
+  tx.push({ type, category, amount, date });
+  localStorage.setItem('transactions', JSON.stringify(tx));
+  loadTrends();
+  e.target.reset();
+});
+
+function loadTrends() {
+  const tx = JSON.parse(localStorage.getItem('transactions') || '[]');
+  const incomeMap = {}, expenseMap = {};
+  const labels = [];
+
+  tx.forEach(t => {
+    const ym = t.date.slice(0, 7);
+    if (!labels.includes(ym)) labels.push(ym);
+    if (t.type === "收入") incomeMap[ym] = (incomeMap[ym] || 0) + t.amount;
+    if (t.type === "支出") expenseMap[ym] = (expenseMap[ym] || 0) + t.amount;
+  });
+
+  labels.sort();
+  const income = labels.map(m => incomeMap[m] || 0);
+  const expense = labels.map(m => expenseMap[m] || 0);
+  const net = labels.map((_, i) => income[i] - expense[i]);
+
+  const ctx = document.getElementById('monthlyTrend').getContext('2d');
+  if (window.trendChart) window.trendChart.destroy();
+  window.trendChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: "收入", data: income, backgroundColor: "#10b981" },
+        { label: "支出", data: expense, backgroundColor: "#ef4444" },
+        { label: "结余", data: net, backgroundColor: "#3b82f6" }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: "bottom" } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+}
+loadTrends();
+
 </script>
 
 
@@ -189,6 +244,61 @@ function deleteDebt(i) {
 
 loadDebts();
 
+
+// ===== 收支记录逻辑 =====
+document.getElementById('recordForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const type = document.getElementById('recordType').value;
+  const category = document.getElementById('recordCategory').value.trim();
+  const amount = parseFloat(document.getElementById('recordAmount').value);
+  const date = document.getElementById('recordDate').value;
+  if (!category || isNaN(amount) || !date) return alert("请输入完整记录");
+
+  const tx = JSON.parse(localStorage.getItem('transactions') || '[]');
+  tx.push({ type, category, amount, date });
+  localStorage.setItem('transactions', JSON.stringify(tx));
+  loadTrends();
+  e.target.reset();
+});
+
+function loadTrends() {
+  const tx = JSON.parse(localStorage.getItem('transactions') || '[]');
+  const incomeMap = {}, expenseMap = {};
+  const labels = [];
+
+  tx.forEach(t => {
+    const ym = t.date.slice(0, 7);
+    if (!labels.includes(ym)) labels.push(ym);
+    if (t.type === "收入") incomeMap[ym] = (incomeMap[ym] || 0) + t.amount;
+    if (t.type === "支出") expenseMap[ym] = (expenseMap[ym] || 0) + t.amount;
+  });
+
+  labels.sort();
+  const income = labels.map(m => incomeMap[m] || 0);
+  const expense = labels.map(m => expenseMap[m] || 0);
+  const net = labels.map((_, i) => income[i] - expense[i]);
+
+  const ctx = document.getElementById('monthlyTrend').getContext('2d');
+  if (window.trendChart) window.trendChart.destroy();
+  window.trendChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: "收入", data: income, backgroundColor: "#10b981" },
+        { label: "支出", data: expense, backgroundColor: "#ef4444" },
+        { label: "结余", data: net, backgroundColor: "#3b82f6" }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: "bottom" } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+}
+loadTrends();
+
 </script>
 
 </head>
@@ -241,6 +351,28 @@ loadDebts();
     </form>
   </div>
   <div id="debtList" class="space-y-3"></div>
+</section>
+
+
+<section id="reports" class="space-y-4 mt-10">
+  <div class="bg-white shadow rounded-xl p-4">
+    <h2 class="text-lg font-semibold">收支记录</h2>
+    <form id="recordForm" class="grid grid-cols-1 gap-2 mt-2">
+      <select id="recordType" class="w-full border rounded p-2">
+        <option value="收入">收入</option>
+        <option value="支出">支出</option>
+      </select>
+      <input id="recordCategory" placeholder="分类（如 工资 / 餐饮）" class="w-full border rounded p-2" required />
+      <input id="recordAmount" type="number" placeholder="金额" class="w-full border rounded p-2" required />
+      <input id="recordDate" type="date" class="w-full border rounded p-2" required />
+      <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">添加记录</button>
+    </form>
+  </div>
+
+  <div class="bg-white shadow rounded-xl p-4">
+    <h2 class="text-lg font-semibold mb-2">月度收支趋势图</h2>
+    <canvas id="monthlyTrend" height="240"></canvas>
+  </div>
 </section>
 
 </main>
@@ -402,6 +534,61 @@ function deleteDebt(i) {
 }
 
 loadDebts();
+
+
+// ===== 收支记录逻辑 =====
+document.getElementById('recordForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const type = document.getElementById('recordType').value;
+  const category = document.getElementById('recordCategory').value.trim();
+  const amount = parseFloat(document.getElementById('recordAmount').value);
+  const date = document.getElementById('recordDate').value;
+  if (!category || isNaN(amount) || !date) return alert("请输入完整记录");
+
+  const tx = JSON.parse(localStorage.getItem('transactions') || '[]');
+  tx.push({ type, category, amount, date });
+  localStorage.setItem('transactions', JSON.stringify(tx));
+  loadTrends();
+  e.target.reset();
+});
+
+function loadTrends() {
+  const tx = JSON.parse(localStorage.getItem('transactions') || '[]');
+  const incomeMap = {}, expenseMap = {};
+  const labels = [];
+
+  tx.forEach(t => {
+    const ym = t.date.slice(0, 7);
+    if (!labels.includes(ym)) labels.push(ym);
+    if (t.type === "收入") incomeMap[ym] = (incomeMap[ym] || 0) + t.amount;
+    if (t.type === "支出") expenseMap[ym] = (expenseMap[ym] || 0) + t.amount;
+  });
+
+  labels.sort();
+  const income = labels.map(m => incomeMap[m] || 0);
+  const expense = labels.map(m => expenseMap[m] || 0);
+  const net = labels.map((_, i) => income[i] - expense[i]);
+
+  const ctx = document.getElementById('monthlyTrend').getContext('2d');
+  if (window.trendChart) window.trendChart.destroy();
+  window.trendChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: "收入", data: income, backgroundColor: "#10b981" },
+        { label: "支出", data: expense, backgroundColor: "#ef4444" },
+        { label: "结余", data: net, backgroundColor: "#3b82f6" }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: "bottom" } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+}
+loadTrends();
 
 </script>
 
