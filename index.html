@@ -6,14 +6,100 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>资产领航 · V0 重构版</title>
   <link rel="icon" href="favicon.png" />
-  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.tailwindcss.com">
+// ===== 统计图表逻辑 =====
+function updateOverview() {
+  const data = JSON.parse(localStorage.getItem('assets') || '[]');
+  let total = 0;
+  const categoryMap = {};
+  data.forEach(a => {
+    const amt = parseFloat(a.amount);
+    total += amt;
+    if (!categoryMap[a.category]) categoryMap[a.category] = 0;
+    categoryMap[a.category] += amt;
+  });
+  document.getElementById('totalAsset').textContent = '总资产：¥' + total.toFixed(2);
+
+  const ctx = document.getElementById('assetPie').getContext('2d');
+  if (window.assetChart) window.assetChart.destroy();
+  window.assetChart = new Chart(ctx, {
+    type: 'pie',
+    data: {
+      labels: Object.keys(categoryMap),
+      datasets: [{
+        data: Object.values(categoryMap),
+        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#6366f1']
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom' } }
+    }
+  });
+}
+loadAssets = (function(original) {
+  return function() {
+    original();
+    updateOverview();
+  }
+})(loadAssets);
+</script>
+
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js">
+// ===== 统计图表逻辑 =====
+function updateOverview() {
+  const data = JSON.parse(localStorage.getItem('assets') || '[]');
+  let total = 0;
+  const categoryMap = {};
+  data.forEach(a => {
+    const amt = parseFloat(a.amount);
+    total += amt;
+    if (!categoryMap[a.category]) categoryMap[a.category] = 0;
+    categoryMap[a.category] += amt;
+  });
+  document.getElementById('totalAsset').textContent = '总资产：¥' + total.toFixed(2);
+
+  const ctx = document.getElementById('assetPie').getContext('2d');
+  if (window.assetChart) window.assetChart.destroy();
+  window.assetChart = new Chart(ctx, {
+    type: 'pie',
+    data: {
+      labels: Object.keys(categoryMap),
+      datasets: [{
+        data: Object.values(categoryMap),
+        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#6366f1']
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom' } }
+    }
+  });
+}
+loadAssets = (function(original) {
+  return function() {
+    original();
+    updateOverview();
+  }
+})(loadAssets);
+</script>
+
 </head>
+
 <body class="bg-gray-50 text-gray-800 text-sm">
   <header class="bg-white shadow px-4 py-3 sticky top-0 z-10">
     <h1 class="text-lg font-bold">资产领航 · V0</h1>
   </header>
 
   <main class="p-4 space-y-6 max-w-3xl mx-auto">
+  <!-- 总资产 + 分类图表 -->
+  <div class="bg-white shadow rounded-xl p-4">
+    <h2 class="text-lg font-semibold mb-2">资产总览</h2>
+    <p id="totalAsset" class="text-xl font-bold text-blue-600 mb-4">总资产：¥0.00</p>
+    <canvas id="assetPie" height="200"></canvas>
+  </div>
+
     <!-- 添加资产 -->
     <div class="bg-white shadow rounded-xl p-4 space-y-2">
       <h2 class="text-lg font-semibold">新增资产</h2>
@@ -101,6 +187,44 @@
 
     loadAssets();
     setInterval(fetchPrices, 60000);
-  </script>
+  
+// ===== 统计图表逻辑 =====
+function updateOverview() {
+  const data = JSON.parse(localStorage.getItem('assets') || '[]');
+  let total = 0;
+  const categoryMap = {};
+  data.forEach(a => {
+    const amt = parseFloat(a.amount);
+    total += amt;
+    if (!categoryMap[a.category]) categoryMap[a.category] = 0;
+    categoryMap[a.category] += amt;
+  });
+  document.getElementById('totalAsset').textContent = '总资产：¥' + total.toFixed(2);
+
+  const ctx = document.getElementById('assetPie').getContext('2d');
+  if (window.assetChart) window.assetChart.destroy();
+  window.assetChart = new Chart(ctx, {
+    type: 'pie',
+    data: {
+      labels: Object.keys(categoryMap),
+      datasets: [{
+        data: Object.values(categoryMap),
+        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#6366f1']
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom' } }
+    }
+  });
+}
+loadAssets = (function(original) {
+  return function() {
+    original();
+    updateOverview();
+  }
+})(loadAssets);
+</script>
+
 </body>
 </html>
