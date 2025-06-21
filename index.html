@@ -250,10 +250,25 @@ function importCSV() {
   reader.readAsText(file);
 }
 // ===== 理财月历功能 =====
+let currentYear = new Date().getFullYear();
+let currentMonth = new Date().getMonth(); // 0-11
+
+function changeMonth(offset) {
+  currentMonth += offset;
+  if (currentMonth < 0) {
+    currentMonth = 11;
+    currentYear--;
+  } else if (currentMonth > 11) {
+    currentMonth = 0;
+    currentYear++;
+  }
+  generateCalendar();
+}
+
 function generateCalendar() {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth();
+  const year = currentYear;
+  const month = currentMonth;
+  
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
   const daysInMonth = lastDay.getDate();
@@ -336,7 +351,11 @@ generateCalendar();
     <section id="dashboard" class="tab-content active">
       <h2>理财月历</h2>
   <div id="calendarContainer" style="margin-bottom: 20px;">
-    <h3 id="calendarMonth"></h3>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <button onclick="changeMonth(-1)">◀ 上月</button>
+      <h3 id="calendarMonth" style="margin: 0;"></h3>
+      <button onclick="changeMonth(1)">下月 ▶</button>
+    </div>
     <div id="calendarGrid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px;"></div>
   </div>
   <h2>快速记账</h2>
@@ -737,10 +756,25 @@ function importCSV() {
   reader.readAsText(file);
 }
 // ===== 理财月历功能 =====
+let currentYear = new Date().getFullYear();
+let currentMonth = new Date().getMonth(); // 0-11
+
+function changeMonth(offset) {
+  currentMonth += offset;
+  if (currentMonth < 0) {
+    currentMonth = 11;
+    currentYear--;
+  } else if (currentMonth > 11) {
+    currentMonth = 0;
+    currentYear++;
+  }
+  generateCalendar();
+}
+
 function generateCalendar() {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth();
+  const year = currentYear;
+  const month = currentMonth;
+  
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
   const daysInMonth = lastDay.getDate();
