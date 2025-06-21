@@ -2,6 +2,9 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>body { background-color: #f9fafb; }</style>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js">
 // 生成分类饼图和月度折线图
 function renderCharts() {
@@ -369,6 +372,8 @@ function updateBudgetBar() {
     <section id="dashboard" class="tab-content active">
 <style>
   .dashboard-grid {
+    @apply grid grid-cols-1 md:grid-cols-2 gap-6;
+  }
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 20px;
@@ -379,46 +384,46 @@ function updateBudgetBar() {
     }
   }
 </style>
-<div class="dashboard-grid">
+<div class="dashboard-grid mt-4">
       <div><h2>理财月历</h2>
-  <div id="calendarContainer" style="margin-bottom: 20px;">
+  <div id="calendarContainer" class="bg-white rounded-xl shadow p-4 mb-4">
     <div style="display: flex; justify-content: space-between; align-items: center;">
       <button onclick="changeMonth(-1)">◀ 上月</button>
       <h3 id="calendarMonth" style="margin: 0;"></h3>
       <button onclick="changeMonth(1)">下月 ▶</button>
     </div>
-    <div id="calendarGrid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px;"></div>
+    <div id="calendarGrid" class="grid grid-cols-7 gap-1 text-center text-sm text-gray-800" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px;"></div>
 <hr style="margin: 10px 0;">
-<div>
-  <p>本月预算使用：</p>
+<div class="bg-white rounded-xl shadow p-4 mt-4">
+  <p class="text-sm font-medium text-gray-700 mb-2">本月预算使用：</p>
   <div style="background: #eee; border-radius: 8px; overflow: hidden; height: 20px;">
-    <div id="budgetBar" style="height: 100%; width: 0%; background: #165DFF; color: white; text-align: center; line-height: 20px; font-size: 12px;"></div>
+    <div id="budgetBar" class="h-full text-white text-center text-xs leading-5 bg-blue-600"></div>
   </div>
 </div>
   </div>
   </div><div><h2>快速记账</h2>
-      <form id="entryForm">
-        <select id="type">
+      <form id="entryForm" class="space-y-2 bg-white rounded-xl shadow p-4 mb-4">
+        <select id="type" class="w-full border rounded p-2">
           <option value="expense">支出</option>
           <option value="income">收入</option>
         </select>
-        <input type="number" id="amount" placeholder="金额 (必填)" required>
-        <select id="category">
+        <input type="number" id="amount" class="w-full border rounded p-2" placeholder="金额 (必填)" required>
+        <select id="category" class="w-full border rounded p-2">
           <option value="餐饮">餐饮</option>
           <option value="交通">交通</option>
           <option value="工资">工资</option>
           <option value="其他">其他</option>
         </select>
-        <input type="date" id="date" required>
-        <input type="text" id="note" placeholder="备注（选填）">
-        <button type="submit">保存记录</button>
+        <input type="date" id="date" class="w-full border rounded p-2" required>
+        <input type="text" id="note" class="w-full border rounded p-2" placeholder="备注（选填）">
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">保存记录</button>
       </form>
 
       </div></div><h3>最近记录</h3>
-      <table id="recordTable">
+      <table id="recordTable" class="w-full border text-sm bg-white rounded shadow overflow-hidden">
         <thead>
           <tr>
-            <th>类型</th><th>金额</th><th>分类</th><th>日期</th><th>备注</th><th>操作</th>
+            <th class="bg-gray-100 p-2 border text-left">类型</th><th class="bg-gray-100 p-2 border text-left">金额</th><th class="bg-gray-100 p-2 border text-left">分类</th><th class="bg-gray-100 p-2 border text-left">日期</th><th class="bg-gray-100 p-2 border text-left">备注</th><th class="bg-gray-100 p-2 border text-left">操作</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -436,7 +441,7 @@ function updateBudgetBar() {
       <option value="投资">投资</option>
       <option value="数字资产">数字资产</option>
     </select>
-    <button type="submit">添加资产</button>
+    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">添加资产</button>
   </form>
   <div id="assetCards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;"></div>
   <canvas id="assetChart" height="180" style="margin-top: 30px;"></canvas>
@@ -453,7 +458,7 @@ function updateBudgetBar() {
       <option value="房贷">房贷</option>
       <option value="借款">借款</option>
     </select>
-    <button type="submit">添加负债</button>
+    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">添加负债</button>
   </form>
   <div id="debtCards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;"></div>
   <canvas id="debtChart" height="180" style="margin-top: 30px;"></canvas>
@@ -507,11 +512,11 @@ function updateBudgetBar() {
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td class="${item.type}">${item.type === 'income' ? '收入' : '支出'}</td>
-          <td>${item.amount}</td>
-          <td>${item.category}</td>
-          <td>${item.date}</td>
-          <td>${item.note || ''}</td>
-          <td><button onclick="deleteRecord(${index})">删除</button></td>
+          <td class="p-2 border"${item.amount}</td>
+          <td class="p-2 border"${item.category}</td>
+          <td class="p-2 border"${item.date}</td>
+          <td class="p-2 border"${item.note || ''}</td>
+          <td class="p-2 border"<button onclick="deleteRecord(${index})">删除</button></td>
         `;
         tableBody.appendChild(tr);
       });
