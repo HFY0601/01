@@ -352,10 +352,18 @@ function updateBudgetBar() {
   </style>
 </head>
 <body>
-  <header>
+  <header class="bg-white shadow px-4 py-3 sticky top-0 z-10">
+    <h1 class="text-lg font-semibold text-gray-800">资产领航 · 极简理财</h1>
+  </header>
     <h1>极简理财</h1>
   </header>
-  <nav>
+  <nav class="bg-white border-t border-gray-200 shadow-sm flex justify-around md:justify-start md:space-x-4 px-2 py-2 text-sm font-medium text-gray-600">
+    <div class="tab-btn px-4 py-2 rounded cursor-pointer hover:bg-blue-50" data-tab="dashboard">总览</div>
+    <div class="tab-btn px-4 py-2 rounded cursor-pointer hover:bg-blue-50" data-tab="assets">资产</div>
+    <div class="tab-btn px-4 py-2 rounded cursor-pointer hover:bg-blue-50" data-tab="liabilities">负债</div>
+    <div class="tab-btn px-4 py-2 rounded cursor-pointer hover:bg-blue-50" data-tab="reports">报表</div>
+    <div class="tab-btn px-4 py-2 rounded cursor-pointer hover:bg-blue-50" data-tab="profile">我的</div>
+  </nav>
     <div class="tab-btn active" data-tab="dashboard">总览</div>
     <div class="tab-btn" data-tab="assets">资产</div>
     <div class="tab-btn" data-tab="liabilities">负债</div>
@@ -465,6 +473,20 @@ function updateBudgetBar() {
 <canvas id="monthlyChart" height="180" style="margin-top: 30px;"></canvas>
 </section>
 <section id="profile" class="tab-content">
+<div class="bg-white rounded-xl shadow p-6 space-y-4">
+  <h2 class="text-xl font-semibold text-gray-800">账户设置</h2>
+  <div class="space-x-2">
+    <button onclick="exportCSV('assets')" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">导出资产</button>
+    <button onclick="exportCSV('debts')" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">导出负债</button>
+    <button onclick="exportCSV('records')" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">导出记账记录</button>
+  </div>
+  <p class="text-sm text-gray-500">导出后将下载 .csv 文件，可用 Excel 打开。</p>
+  <hr>
+  <h3 class="text-md font-medium text-gray-700">导入数据</h3>
+  <input type="file" id="importFile" accept=".csv" class="w-full border rounded p-2">
+  <button onclick="importCSV()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mt-2">导入数据</button>
+  <p class="text-xs text-gray-400">支持文件名：assets.csv、debts.csv、records.csv</p>
+</div>
   <h2>账户设置</h2>
   <button onclick="exportCSV('assets')">导出资产</button>
   <button onclick="exportCSV('debts')">导出负债</button>
@@ -488,9 +510,11 @@ function updateBudgetBar() {
     tabButtons.forEach(button => {
       button.addEventListener('click', () => {
         const target = button.getAttribute('data-tab');
-        tabButtons.forEach(btn => btn.classList.remove('active'));
+        tabButtons.forEach(btn => {
+        btn.classList.remove('bg-blue-100', 'text-blue-700', 'font-semibold');
+      });
         tabContents.forEach(content => content.classList.remove('active'));
-        button.classList.add('active');
+        button.classList.add('bg-blue-100', 'text-blue-700', 'font-semibold');
         document.getElementById(target).classList.add('active');
       });
     });
