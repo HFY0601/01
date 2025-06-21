@@ -151,6 +151,71 @@ function loadTrends() {
 }
 loadTrends();
 
+
+// ===== 我的页面逻辑 =====
+function exportCSV() {
+  let text = '';
+  const assets = JSON.parse(localStorage.getItem('assets') || '[]');
+  const debts = JSON.parse(localStorage.getItem('debts') || '[]');
+  const tx = JSON.parse(localStorage.getItem('transactions') || '[]');
+
+  text += '资产\nname,amount,category,code\n';
+  assets.forEach(a => text += `${a.name},${a.amount},${a.category},${a.code || ''}\n`);
+
+  text += '\n负债\nname,amount,remaining,dueDate,category\n';
+  debts.forEach(d => text += `${d.name},${d.amount},${d.remaining},${d.dueDate},${d.category}\n`);
+
+  text += '\n收支\ntype,amount,date,category\n';
+  tx.forEach(t => text += `${t.type},${t.amount},${t.date},${t.category}\n`);
+
+  const blob = new Blob([text], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'finapp_data.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importCSV() {
+  const file = document.getElementById('importFile').files[0];
+  if (!file) return alert("请选择 CSV 文件");
+
+  const reader = new FileReader();
+  reader.onload = function() {
+    const lines = reader.result.split('\n').map(l => l.trim());
+    let mode = '';
+    let assets = [], debts = [], tx = [];
+
+    for (let line of lines) {
+      if (line === '资产') { mode = 'assets'; continue; }
+      if (line === '负债') { mode = 'debts'; continue; }
+      if (line === '收支') { mode = 'tx'; continue; }
+      if (!line || line.includes('name') || line.includes('type')) continue;
+
+      const parts = line.split(',');
+      if (mode === 'assets') assets.push({ name: parts[0], amount: +parts[1], category: parts[2], code: parts[3] });
+      if (mode === 'debts') debts.push({ name: parts[0], amount: +parts[1], remaining: +parts[2], dueDate: parts[3], category: parts[4] });
+      if (mode === 'tx') tx.push({ type: parts[0], amount: +parts[1], date: parts[2], category: parts[3] });
+    }
+
+    if (assets.length) localStorage.setItem('assets', JSON.stringify(assets));
+    if (debts.length) localStorage.setItem('debts', JSON.stringify(debts));
+    if (tx.length) localStorage.setItem('transactions', JSON.stringify(tx));
+
+    alert("导入完成");
+    loadAssets(); loadDebts(); loadTrends();
+  };
+  reader.readAsText(file);
+}
+
+function clearAll() {
+  if (!confirm("确定要清除所有本地数据吗？此操作无法恢复！")) return;
+  localStorage.clear();
+  loadAssets(); loadDebts(); loadTrends();
+  alert("数据已清除");
+}
+
 </script>
 
 
@@ -299,6 +364,71 @@ function loadTrends() {
 }
 loadTrends();
 
+
+// ===== 我的页面逻辑 =====
+function exportCSV() {
+  let text = '';
+  const assets = JSON.parse(localStorage.getItem('assets') || '[]');
+  const debts = JSON.parse(localStorage.getItem('debts') || '[]');
+  const tx = JSON.parse(localStorage.getItem('transactions') || '[]');
+
+  text += '资产\nname,amount,category,code\n';
+  assets.forEach(a => text += `${a.name},${a.amount},${a.category},${a.code || ''}\n`);
+
+  text += '\n负债\nname,amount,remaining,dueDate,category\n';
+  debts.forEach(d => text += `${d.name},${d.amount},${d.remaining},${d.dueDate},${d.category}\n`);
+
+  text += '\n收支\ntype,amount,date,category\n';
+  tx.forEach(t => text += `${t.type},${t.amount},${t.date},${t.category}\n`);
+
+  const blob = new Blob([text], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'finapp_data.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importCSV() {
+  const file = document.getElementById('importFile').files[0];
+  if (!file) return alert("请选择 CSV 文件");
+
+  const reader = new FileReader();
+  reader.onload = function() {
+    const lines = reader.result.split('\n').map(l => l.trim());
+    let mode = '';
+    let assets = [], debts = [], tx = [];
+
+    for (let line of lines) {
+      if (line === '资产') { mode = 'assets'; continue; }
+      if (line === '负债') { mode = 'debts'; continue; }
+      if (line === '收支') { mode = 'tx'; continue; }
+      if (!line || line.includes('name') || line.includes('type')) continue;
+
+      const parts = line.split(',');
+      if (mode === 'assets') assets.push({ name: parts[0], amount: +parts[1], category: parts[2], code: parts[3] });
+      if (mode === 'debts') debts.push({ name: parts[0], amount: +parts[1], remaining: +parts[2], dueDate: parts[3], category: parts[4] });
+      if (mode === 'tx') tx.push({ type: parts[0], amount: +parts[1], date: parts[2], category: parts[3] });
+    }
+
+    if (assets.length) localStorage.setItem('assets', JSON.stringify(assets));
+    if (debts.length) localStorage.setItem('debts', JSON.stringify(debts));
+    if (tx.length) localStorage.setItem('transactions', JSON.stringify(tx));
+
+    alert("导入完成");
+    loadAssets(); loadDebts(); loadTrends();
+  };
+  reader.readAsText(file);
+}
+
+function clearAll() {
+  if (!confirm("确定要清除所有本地数据吗？此操作无法恢复！")) return;
+  localStorage.clear();
+  loadAssets(); loadDebts(); loadTrends();
+  alert("数据已清除");
+}
+
 </script>
 
 </head>
@@ -372,6 +502,23 @@ loadTrends();
   <div class="bg-white shadow rounded-xl p-4">
     <h2 class="text-lg font-semibold mb-2">月度收支趋势图</h2>
     <canvas id="monthlyTrend" height="240"></canvas>
+  </div>
+</section>
+
+
+<section id="profile" class="space-y-4 mt-10">
+  <div class="bg-white shadow rounded-xl p-4">
+    <h2 class="text-lg font-semibold">数据导出</h2>
+    <button onclick="exportCSV()" class="bg-blue-600 text-white px-4 py-2 rounded mt-2">📤 导出 CSV</button>
+  </div>
+  <div class="bg-white shadow rounded-xl p-4">
+    <h2 class="text-lg font-semibold">数据导入</h2>
+    <input type="file" id="importFile" class="block mt-2" />
+    <button onclick="importCSV()" class="bg-green-600 text-white px-4 py-2 rounded mt-2">📥 导入 CSV</button>
+  </div>
+  <div class="bg-white shadow rounded-xl p-4">
+    <h2 class="text-lg font-semibold text-red-600">清空所有数据</h2>
+    <button onclick="clearAll()" class="bg-red-600 text-white px-4 py-2 rounded mt-2">🗑 清空本地数据</button>
   </div>
 </section>
 
@@ -589,6 +736,71 @@ function loadTrends() {
   });
 }
 loadTrends();
+
+
+// ===== 我的页面逻辑 =====
+function exportCSV() {
+  let text = '';
+  const assets = JSON.parse(localStorage.getItem('assets') || '[]');
+  const debts = JSON.parse(localStorage.getItem('debts') || '[]');
+  const tx = JSON.parse(localStorage.getItem('transactions') || '[]');
+
+  text += '资产\nname,amount,category,code\n';
+  assets.forEach(a => text += `${a.name},${a.amount},${a.category},${a.code || ''}\n`);
+
+  text += '\n负债\nname,amount,remaining,dueDate,category\n';
+  debts.forEach(d => text += `${d.name},${d.amount},${d.remaining},${d.dueDate},${d.category}\n`);
+
+  text += '\n收支\ntype,amount,date,category\n';
+  tx.forEach(t => text += `${t.type},${t.amount},${t.date},${t.category}\n`);
+
+  const blob = new Blob([text], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'finapp_data.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importCSV() {
+  const file = document.getElementById('importFile').files[0];
+  if (!file) return alert("请选择 CSV 文件");
+
+  const reader = new FileReader();
+  reader.onload = function() {
+    const lines = reader.result.split('\n').map(l => l.trim());
+    let mode = '';
+    let assets = [], debts = [], tx = [];
+
+    for (let line of lines) {
+      if (line === '资产') { mode = 'assets'; continue; }
+      if (line === '负债') { mode = 'debts'; continue; }
+      if (line === '收支') { mode = 'tx'; continue; }
+      if (!line || line.includes('name') || line.includes('type')) continue;
+
+      const parts = line.split(',');
+      if (mode === 'assets') assets.push({ name: parts[0], amount: +parts[1], category: parts[2], code: parts[3] });
+      if (mode === 'debts') debts.push({ name: parts[0], amount: +parts[1], remaining: +parts[2], dueDate: parts[3], category: parts[4] });
+      if (mode === 'tx') tx.push({ type: parts[0], amount: +parts[1], date: parts[2], category: parts[3] });
+    }
+
+    if (assets.length) localStorage.setItem('assets', JSON.stringify(assets));
+    if (debts.length) localStorage.setItem('debts', JSON.stringify(debts));
+    if (tx.length) localStorage.setItem('transactions', JSON.stringify(tx));
+
+    alert("导入完成");
+    loadAssets(); loadDebts(); loadTrends();
+  };
+  reader.readAsText(file);
+}
+
+function clearAll() {
+  if (!confirm("确定要清除所有本地数据吗？此操作无法恢复！")) return;
+  localStorage.clear();
+  loadAssets(); loadDebts(); loadTrends();
+  alert("数据已清除");
+}
 
 </script>
 
