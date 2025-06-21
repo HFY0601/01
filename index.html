@@ -221,6 +221,13 @@ function clearAll() {
 function showTab(id) {
   document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
   document.getElementById(id).classList.remove('hidden');
+
+  document.querySelectorAll('footer nav button').forEach(btn => btn.classList.remove('text-blue-600', 'font-bold'));
+  event.target.classList.add('text-blue-600', 'font-bold');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -440,6 +447,13 @@ function clearAll() {
 
 // ===== 页面标签切换逻辑 =====
 function showTab(id) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+
+  document.querySelectorAll('footer nav button').forEach(btn => btn.classList.remove('text-blue-600', 'font-bold'));
+  event.target.classList.add('text-blue-600', 'font-bold');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
   document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
   document.getElementById(id).classList.remove('hidden');
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -832,6 +846,13 @@ function clearAll() {
 
 // ===== 页面标签切换逻辑 =====
 function showTab(id) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+
+  document.querySelectorAll('footer nav button').forEach(btn => btn.classList.remove('text-blue-600', 'font-bold'));
+  event.target.classList.add('text-blue-600', 'font-bold');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
   document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
   document.getElementById(id).classList.remove('hidden');
   window.scrollTo({ top: 0, behavior: 'smooth' });
