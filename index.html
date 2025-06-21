@@ -263,6 +263,7 @@ function changeMonth(offset) {
     currentYear++;
   }
   generateCalendar();
+updateBudgetBar();
 }
 
 function generateCalendar() {
@@ -308,6 +309,23 @@ function generateCalendar() {
 }
 
 generateCalendar();
+updateBudgetBar();
+// ===== 月度预算进度条 =====
+function updateBudgetBar() {
+  const records = JSON.parse(localStorage.getItem('records') || '[]');
+  const year = currentYear;
+  const month = (currentMonth + 1).toString().padStart(2, '0');
+  const prefix = `${year}-${month}`;
+  const expenses = records
+    .filter(r => r.type === 'expense' && r.date?.startsWith(prefix))
+    .reduce((sum, r) => sum + parseFloat(r.amount || 0), 0);
+  const budget = 5000; // 默认预算，可改为可设置
+  const percent = Math.min((expenses / budget) * 100, 100).toFixed(1);
+  const bar = document.getElementById('budgetBar');
+  bar.style.width = percent + '%';
+  bar.textContent = `¥${expenses.toFixed(2)} / ¥${budget}`;
+  bar.style.backgroundColor = percent > 80 ? '#f44336' : '#165DFF';
+}
 </script>
   <meta charset="UTF-8">
   <title>极简理财 - 记账功能</title>
@@ -357,6 +375,13 @@ generateCalendar();
       <button onclick="changeMonth(1)">下月 ▶</button>
     </div>
     <div id="calendarGrid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px;"></div>
+<hr style="margin: 10px 0;">
+<div>
+  <p>本月预算使用：</p>
+  <div style="background: #eee; border-radius: 8px; overflow: hidden; height: 20px;">
+    <div id="budgetBar" style="height: 100%; width: 0%; background: #165DFF; color: white; text-align: center; line-height: 20px; font-size: 12px;"></div>
+  </div>
+</div>
   </div>
   <h2>快速记账</h2>
       <form id="entryForm">
@@ -769,6 +794,7 @@ function changeMonth(offset) {
     currentYear++;
   }
   generateCalendar();
+updateBudgetBar();
 }
 
 function generateCalendar() {
@@ -814,6 +840,23 @@ function generateCalendar() {
 }
 
 generateCalendar();
+updateBudgetBar();
+// ===== 月度预算进度条 =====
+function updateBudgetBar() {
+  const records = JSON.parse(localStorage.getItem('records') || '[]');
+  const year = currentYear;
+  const month = (currentMonth + 1).toString().padStart(2, '0');
+  const prefix = `${year}-${month}`;
+  const expenses = records
+    .filter(r => r.type === 'expense' && r.date?.startsWith(prefix))
+    .reduce((sum, r) => sum + parseFloat(r.amount || 0), 0);
+  const budget = 5000; // 默认预算，可改为可设置
+  const percent = Math.min((expenses / budget) * 100, 100).toFixed(1);
+  const bar = document.getElementById('budgetBar');
+  bar.style.width = percent + '%';
+  bar.textContent = `¥${expenses.toFixed(2)} / ¥${budget}`;
+  bar.style.backgroundColor = percent > 80 ? '#f44336' : '#165DFF';
+}
 </script>
 </body>
 </html>
