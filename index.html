@@ -1,252 +1,1655 @@
-﻿
-<!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 <head>
-
   <meta charset="UTF-8">
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-  <meta http-equiv="Content-Language" content="zh-CN" />
-
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>资产领航 · V0 重构版</title>
-  <link rel="icon" href="favicon.png" />
-  
-<script<script src="https://cdn.tailwindcss.com">
-// ===== 统计图表逻辑 =====
-function updateOverview() {
-  const data = JSON.parse(localStorage.getItem('assets') || '[]');
-  let total = 0;
-  const categoryMap = {};
-  data.forEach(a => {
-    const amt = parseFloat(a.amount);
-    total += amt;
-    if (!categoryMap[a.category]) categoryMap[a.category] = 0;
-    categoryMap[a.category] += amt;
-  });
-  document.getElementById('totalAsset').textContent = '总资产：¥' + total.toFixed(2);
-
-  const ctx = document.getElementById('assetPie').getContext('2d');
-  if (window.assetChart) window.assetChart.destroy();
-  window.assetChart = new Chart(ctx, {
-    type: 'pie',
-    data: {
-      labels: Object.keys(categoryMap),
-      datasets: [{
-        data: Object.values(categoryMap),
-        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#6366f1']
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { position: 'bottom' } }
-    }
-  });
-}
-loadAssets = (function(original) {
-  return function() {
-    original();
-    updateOverview();
-  }
-})(loadAssets);
-
-// ===== 负债逻辑 =====
-document.getElementById('debtForm').addEventListener('submit', e => {
-  e.preventDefault();
-  const name = document.getElementById('debtName').value.trim();
-  const amount = parseFloat(document.getElementById('debtAmount').value);
-  const remaining = parseFloat(document.getElementById('debtRemaining').value);
-  const dueDate = document.getElementById('debtDue').value;
-  const category = document.getElementById('debtCategory').value;
-  if (!name || isNaN(amount) || isNaN(remaining) || !dueDate) return alert("请输入完整信息");
-
-  const debts = JSON.parse(localStorage.getItem('debts') || '[]');
-  debts.push({ name, amount, remaining, dueDate, category });
-  localStorage.setItem('debts', JSON.stringify(debts));
-  loadDebts();
-  e.target.reset();
-});
-
-function loadDebts() {
-  const list = document.getElementById('debtList');
-  const debts = JSON.parse(localStorage.getItem('debts') || '[]');
-  list.innerHTML = '';
-  const today = new Date();
-
-  debts.forEach((d, i) => {
-    const card = document.createElement('div');
-    card.className = "bg-white shadow rounded-xl p-4 border-l-4 border-red-500";
-    const due = new Date(d.dueDate);
-    const days = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
-    const warn = days <= 7 ? "⚠️ 即将到期" : "";
-    const paid = d.amount - d.remaining;
-    const progress = Math.min(100, (paid / d.amount) * 100).toFixed(1);
-
-    card.innerHTML = `
-      <strong>${d.name}</strong> <small class="text-gray-500">（${d.category}）</small><br>
-      剩余：¥${d.remaining.toFixed(2)} / 总额 ¥${d.amount.toFixed(2)}<br>
-      到期日：${d.dueDate} <span class="text-red-600 text-sm">${warn}</span><br>
-      <div class="w-full bg-gray-200 rounded h-2 mt-2"><div class="bg-red-500 h-2 rounded" style="width:${progress}%"></div></div>
-      <button onclick="deleteDebt(${i})" class="text-red-600 text-sm mt-2 hover:underline">删除</button>
-    `;
-    list.appendChild(card);
-  });
-}
-
-function deleteDebt(i) {
-  const debts = JSON.parse(localStorage.getItem('debts') || '[]');
-  debts.splice(i, 1);
-  localStorage.setItem('debts', JSON.stringify(debts));
-  loadDebts();
-}
-
-loadDebts();
-
-
-// ===== 收支记录逻辑 =====
-document.getElementById('recordForm').addEventListener('submit', e => {
-  e.preventDefault();
-  const type = document.getElementById('recordType').value;
-  const category = document.getElementById('recordCategory').value.trim();
-  const amount = parseFloat(document.getElementById('recordAmount').value);
-  const date = document.getElementById('recordDate').value;
-  if (!category || isNaN(amount) || !date) return alert("请输入完整记录");
-
-  const tx = JSON.parse(localStorage.getItem('transactions') || '[]');
-  tx.push({ type, category, amount, date });
-  localStorage.setItem('transactions', JSON.stringify(tx));
-  loadTrends();
-  e.target.reset();
-});
-
-function loadTrends() {
-  const tx = JSON.parse(localStorage.getItem('transactions') || '[]');
-  const incomeMap = {}, expenseMap = {};
-  const labels = [];
-
-  tx.forEach(t => {
-    const ym = t.date.slice(0, 7);
-    if (!labels.includes(ym)) labels.push(ym);
-    if (t.type === "收入") incomeMap[ym] = (incomeMap[ym] || 0) + t.amount;
-    if (t.type === "支出") expenseMap[ym] = (expenseMap[ym] || 0) + t.amount;
-  });
-
-  labels.sort();
-  const income = labels.map(m => incomeMap[m] || 0);
-  const expense = labels.map(m => expenseMap[m] || 0);
-  const net = labels.map((_, i) => income[i] - expense[i]);
-
-  const ctx = document.getElementById('monthlyTrend').getContext('2d');
-  if (window.trendChart) window.trendChart.destroy();
-  window.trendChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [
-        { label: "收入", data: income, backgroundColor: "#10b981" },
-        { label: "支出", data: expense, backgroundColor: "#ef4444" },
-        { label: "结余", data: net, backgroundColor: "#3b82f6" }
-      ]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { position: "bottom" } },
-      scales: { y: { beginAtZero: true } }
-    }
-  });
-}
-loadTrends();
-
-
-// ===== 我的页面逻辑 =====
-function exportCSV() {
-  let text = '';
-  const assets = JSON.parse(localStorage.getItem('assets') || '[]');
-  const debts = JSON.parse(localStorage.getItem('debts') || '[]');
-  const tx = JSON.parse(localStorage.getItem('transactions') || '[]');
-
-  text += '资产\nname,amount,category,code\n';
-  assets.forEach(a => text += `${a.name},${a.amount},${a.category},${a.code || ''}\n`);
-
-  text += '\n负债\nname,amount,remaining,dueDate,category\n';
-  debts.forEach(d => text += `${d.name},${d.amount},${d.remaining},${d.dueDate},${d.category}\n`);
-
-  text += '\n收支\ntype,amount,date,category\n';
-  tx.forEach(t => text += `${t.type},${t.amount},${t.date},${t.category}\n`);
-
-  const blob = new Blob([text], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'finapp_data.csv';
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-function importCSV() {
-  const file = document.getElementById('importFile').files[0];
-  if (!file) return alert("请选择 CSV 文件");
-
-  const reader = new FileReader();
-  reader.onload = function() {
-    const lines = reader.result.split('\n').map(l => l.trim());
-    let mode = '';
-    let assets = [], debts = [], tx = [];
-
-    for (let line of lines) {
-      if (line === '资产') { mode = 'assets'; continue; }
-      if (line === '负债') { mode = 'debts'; continue; }
-      if (line === '收支') { mode = 'tx'; continue; }
-      if (!line || line.includes('name') || line.includes('type')) continue;
-
-      const parts = line.split(',');
-      if (mode === 'assets') assets.push({ name: parts[0], amount: +parts[1], category: parts[2], code: parts[3] });
-      if (mode === 'debts') debts.push({ name: parts[0], amount: +parts[1], remaining: +parts[2], dueDate: parts[3], category: parts[4] });
-      if (mode === 'tx') tx.push({ type: parts[0], amount: +parts[1], date: parts[2], category: parts[3] });
-    }
-
-    if (assets.length) localStorage.setItem('assets', JSON.stringify(assets));
-    if (debts.length) localStorage.setItem('debts', JSON.stringify(debts));
-    if (tx.length) localStorage.setItem('transactions', JSON.stringify(tx));
-
-    alert("导入完成");
-    loadAssets(); loadDebts(); loadTrends();
-  };
-  reader.readAsText(file);
-}
-
-function clearAll() {
-  if (!confirm("确定要清除所有本地数据吗？此操作无法恢复！")) return;
-  localStorage.clear();
-  loadAssets(); loadDebts(); loadTrends();
-  alert("数据已清除");
-}
-
-
-// ===== 页面标签切换逻辑 =====
-function showTab(id, el) {
-  document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-  document.getElementById(id).classList.remove('hidden');
-  document.querySelectorAll('footer nav button').forEach(btn => btn.classList.remove('text-blue-600', 'font-bold'));
-  if (el) el.classList.add('text-blue-600', 'font-bold');
-  window.scrollTo({ top: 0 });
-}
-  document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-  document.getElementById(id).classList.remove('hidden');
-
-  document.querySelectorAll('footer nav button').forEach(btn => btn.classList.remove('text-blue-600', 'font-bold'));
-  event.target.classList.add('text-blue-600', 'font-bold');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-  document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-  document.getElementById(id).classList.remove('hidden');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-</script>
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>极简理财 - 财务管理APP</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
 <script>
-window.onload = () => showTab('dashboard', document.querySelector('footer nav button'));
+  // 财务数据管理
+  const FinanceApp = {
+    budgets: [],
+    
+    // 添加预算
+    addBudget: function(category, amount, period) {
+      const budget = {
+        id: Date.now(),
+        category,
+        amount: parseFloat(amount),
+        period,
+        createdAt: new Date().toISOString()
+      };
+      this.budgets.push(budget);
+      this.saveToLocalStorage();
+      return budget;
+    },
+    
+    // 删除预算
+    deleteBudget: function(id) {
+      this.budgets = this.budgets.filter(b => b.id !== id);
+      this.saveToLocalStorage();
+    },
+    
+    // 获取所有预算
+    getAllBudgets: function() {
+      return [...this.budgets];
+    },
+    
+    // 获取特定分类的预算
+    getBudgetByCategory: function(category) {
+      return this.budgets.find(b => b.category === category);
+    },
+    
+    // 计算预算使用率
+    getBudgetUsage: function(category) {
+      const budget = this.getBudgetByCategory(category);
+      if (!budget) return null;
+      
+      const expenses = this.getTransactionsByType('expense')
+        .filter(t => t.category === category);
+      
+      const totalExpense = expenses.reduce((sum, t) => sum + t.amount, 0);
+      return {
+        used: totalExpense,
+        remaining: budget.amount - totalExpense,
+        percentage: (totalExpense / budget.amount) * 100
+      };
+    },
+    transactions: [],
+    
+    // 添加新交易
+    addTransaction: function(type, amount, category, date, note) {
+      const transaction = {
+        id: Date.now(),
+        type,
+        amount: parseFloat(amount),
+        category,
+        date: date || new Date().toISOString().split('T')[0],
+        note: note || ''
+      };
+      this.transactions.push(transaction);
+      this.saveToLocalStorage();
+      return transaction;
+    },
+    
+    // 删除交易
+    deleteTransaction: function(id) {
+      this.transactions = this.transactions.filter(t => t.id !== id);
+      this.saveToLocalStorage();
+    },
+    
+    // 获取所有交易
+    getAllTransactions: function() {
+      return [...this.transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+    },
+    
+    // 按类型获取交易
+    getTransactionsByType: function(type) {
+      return this.transactions.filter(t => t.type === type);
+    },
+    
+    // 按日期范围获取交易
+    getTransactionsByDateRange: function(startDate, endDate) {
+      return this.transactions.filter(t => {
+        const date = new Date(t.date);
+        return date >= new Date(startDate) && date <= new Date(endDate);
+      });
+    },
+    
+    // 计算总收入
+    getTotalIncome: function() {
+      return this.getTransactionsByType('income').reduce((sum, t) => sum + t.amount, 0);
+    },
+    
+    // 计算总支出
+    getTotalExpense: function() {
+      return this.getTransactionsByType('expense').reduce((sum, t) => sum + t.amount, 0);
+    },
+    
+    // 计算余额
+    getBalance: function() {
+      return this.getTotalIncome() - this.getTotalExpense();
+    },
+    
+    // 保存到本地存储
+    saveToLocalStorage: function() {
+      localStorage.setItem('financeAppData', JSON.stringify({
+        transactions: this.transactions,
+        budgets: this.budgets
+      }));
+    },
+    
+    // 从本地存储加载
+    loadFromLocalStorage: function() {
+      const data = localStorage.getItem('financeAppData');
+      if (data) {
+        const parsedData = JSON.parse(data);
+        this.transactions = parsedData.transactions || [];
+        this.budgets = parsedData.budgets || [];
+      }
+    },
+    
+    // 初始化
+    init: function() {
+      this.loadFromLocalStorage();
+    }
+  };
+  
+  // 初始化应用
+  document.addEventListener('DOMContentLoaded', () => {
+    FinanceApp.init();
+    
+    // 初始化收支统计图表
+    function initFinanceCharts() {
+      // 收支比例饼图
+      const pieCtx = document.getElementById('incomeExpensePieChart').getContext('2d');
+      new Chart(pieCtx, {
+        type: 'pie',
+        data: {
+          labels: ['收入', '支出'],
+          datasets: [{
+            data: [FinanceApp.getTotalIncome(), FinanceApp.getTotalExpense()],
+            backgroundColor: ['#00B42A', '#F53F3F'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'bottom'
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return context.label + ': ¥' + context.raw.toFixed(2);
+                }
+              }
+            }
+          }
+        }
+      });
+      
+      // 月度收支趋势图
+      const lineCtx = document.getElementById('monthlyTrendChart').getContext('2d');
+      new Chart(lineCtx, {
+        type: 'line',
+        data: {
+          labels: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+          datasets: [
+            {
+              label: '收入',
+              data: Array(12).fill(0).map((_, i) => {
+                const startDate = new Date(new Date().getFullYear(), i, 1).toISOString().split('T')[0];
+                const endDate = new Date(new Date().getFullYear(), i + 1, 0).toISOString().split('T')[0];
+                return FinanceApp.getTransactionsByDateRange(startDate, endDate)
+                  .filter(t => t.type === 'income')
+                  .reduce((sum, t) => sum + t.amount, 0);
+              }),
+              borderColor: '#00B42A',
+              backgroundColor: 'rgba(0, 180, 42, 0.1)',
+              tension: 0.3,
+              fill: true
+            },
+            {
+              label: '支出',
+              data: Array(12).fill(0).map((_, i) => {
+                const startDate = new Date(new Date().getFullYear(), i, 1).toISOString().split('T')[0];
+                const endDate = new Date(new Date().getFullYear(), i + 1, 0).toISOString().split('T')[0];
+                return FinanceApp.getTransactionsByDateRange(startDate, endDate)
+                  .filter(t => t.type === 'expense')
+                  .reduce((sum, t) => sum + t.amount, 0);
+              }),
+              borderColor: '#F53F3F',
+              backgroundColor: 'rgba(245, 63, 63, 0.1)',
+              tension: 0.3,
+              fill: true
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return context.dataset.label + ': ¥' + context.raw.toFixed(2);
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+    
+    // 更新图表数据
+    function updateFinanceCharts() {
+      // 这里可以添加图表更新逻辑
+    }
+    
+    // 初始化图表
+    initFinanceCharts();
+    
+    // 预算管理交互
+    document.getElementById('addBudgetBtn').addEventListener('click', () => {
+      document.getElementById('budgetsList').classList.add('hidden');
+      document.getElementById('budgetForm').classList.remove('hidden');
+    });
+    
+    document.getElementById('cancelBudgetBtn').addEventListener('click', () => {
+      document.getElementById('budgetForm').classList.add('hidden');
+      document.getElementById('budgetsList').classList.remove('hidden');
+      document.getElementById('addBudgetForm').reset();
+    });
+    
+    document.getElementById('addBudgetForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      const category = document.getElementById('budgetCategory').value;
+      const amount = document.getElementById('budgetAmount').value;
+      const period = document.getElementById('budgetPeriod').value;
+      
+      FinanceApp.addBudget(category, amount, period);
+      updateBudgetsList();
+      
+      document.getElementById('budgetForm').classList.add('hidden');
+      document.getElementById('budgetsList').classList.remove('hidden');
+      document.getElementById('addBudgetForm').reset();
+    });
+    
+    // 更新预算列表
+    function updateBudgetsList() {
+      const budgetsList = document.getElementById('budgetsList');
+      budgetsList.innerHTML = '';
+      
+      const budgets = FinanceApp.getAllBudgets();
+      
+      if (budgets.length === 0) {
+        budgetsList.innerHTML = '<div class="text-center text-dark-light py-4">暂无预算设置</div>';
+        return;
+      }
+      
+      budgets.forEach(budget => {
+        const usage = FinanceApp.getBudgetUsage(budget.category);
+        const budgetEl = document.createElement('div');
+        budgetEl.className = 'bg-ultra-light rounded-lg p-4';
+        
+        const categoryName = {
+          'food': '餐饮',
+          'shopping': '购物',
+          'transportation': '交通',
+          'entertainment': '娱乐',
+          'other': '其他'
+        }[budget.category] || budget.category;
+        
+        budgetEl.innerHTML = `
+          <div class="flex justify-between items-center mb-2">
+            <div class="font-medium">${categoryName}</div>
+            <div class="text-dark-light text-sm">${budget.period === 'monthly' ? '月度' : budget.period === 'weekly' ? '每周' : '每日'}预算</div>
+          </div>
+          
+          <div class="mb-2">
+            <div class="flex justify-between text-sm mb-1">
+              <span>预算: ¥${budget.amount.toFixed(2)}</span>
+              <span>已用: ¥${usage ? usage.used.toFixed(2) : '0.00'}</span>
+            </div>
+            
+            <div class="w-full bg-light-gray rounded-full h-2">
+              <div class="bg-primary h-2 rounded-full" style="width: ${usage ? Math.min(usage.percentage, 100) : 0}%"></div>
+            </div>
+          </div>
+          
+          <div class="flex justify-between text-sm">
+            <span class="text-dark-light">剩余: ¥${usage ? usage.remaining.toFixed(2) : budget.amount.toFixed(2)}</span>
+            <span class="font-medium" style="color: ${usage && usage.percentage > 80 ? 'var(--danger)' : 'var(--success)'}">
+              ${usage ? usage.percentage.toFixed(1) : '0'}%
+            </span>
+          </div>
+          
+          <div class="mt-3 flex justify-end">
+            <button class="text-danger hover:text-danger/80 transition-colors delete-budget-btn" data-id="${budget.id}">
+              <i class="fa fa-trash-o"></i>
+            </button>
+          </div>
+        `;
+        
+        budgetsList.appendChild(budgetEl);
+      });
+      
+      // 绑定删除按钮事件
+      document.querySelectorAll('.delete-budget-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const id = parseInt(e.currentTarget.dataset.id);
+          FinanceApp.deleteBudget(id);
+          updateBudgetsList();
+        });
+      });
+    }
+    
+    // 初始化预算列表
+    updateBudgetsList();
+    
+    // 设置当前日期为默认值
+    document.getElementById('dateInput').valueAsDate = new Date();
+    
+    // 交易类型按钮切换
+    document.querySelectorAll('.transaction-type-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.transaction-type-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
+    });
+    
+    // 表单提交处理
+    document.getElementById('transactionForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      const type = document.querySelector('.transaction-type-btn.active').dataset.type;
+      const amount = document.getElementById('amountInput').value;
+      const category = document.getElementById('categorySelect').value;
+      const date = document.getElementById('dateInput').value;
+      const note = document.getElementById('noteInput').value;
+      
+      const transaction = FinanceApp.addTransaction(type, amount, category, date, note);
+      updateTransactionsList();
+      
+      // 重置表单
+      document.getElementById('transactionForm').reset();
+      document.getElementById('dateInput').valueAsDate = new Date();
+      document.querySelector('.transaction-type-btn[data-type="income"]').classList.add('active');
+      document.querySelector('.transaction-type-btn[data-type="expense"]').classList.remove('active');
+    });
+    
+    // 取消按钮
+    document.getElementById('cancelBtn').addEventListener('click', () => {
+      document.getElementById('transactionForm').reset();
+      document.getElementById('dateInput').valueAsDate = new Date();
+    });
+    
+    // 初始化交易列表
+    updateTransactionsList();
+    
+    function updateTransactionsList() {
+      const tbody = document.getElementById('transactionsBody');
+      tbody.innerHTML = '';
+      
+      const transactions = FinanceApp.getAllTransactions();
+      
+      if (transactions.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="py-4 text-center text-dark-light">暂无交易记录</td></tr>';
+        return;
+      }
+      
+      transactions.forEach(transaction => {
+        const tr = document.createElement('tr');
+        tr.className = 'transaction-item border-b border-light-gray/30 hover:bg-ultra-light';
+        
+        const dateTd = document.createElement('td');
+        dateTd.className = 'py-3';
+        dateTd.textContent = transaction.date;
+        
+        const categoryTd = document.createElement('td');
+        categoryTd.className = 'py-3';
+        categoryTd.textContent = {
+          'salary': '工资',
+          'investment': '投资',
+          'food': '餐饮',
+          'shopping': '购物',
+          'transportation': '交通',
+          'entertainment': '娱乐',
+          'other': '其他'
+        }[transaction.category] || transaction.category;
+        
+        const amountTd = document.createElement('td');
+        amountTd.className = 'py-3 text-right font-medium';
+        amountTd.textContent = (transaction.type === 'income' ? '+' : '-') + '¥' + transaction.amount.toFixed(2);
+        amountTd.style.color = transaction.type === 'income' ? 'var(--success)' : 'var(--danger)';
+        
+        const actionTd = document.createElement('td');
+        actionTd.className = 'py-3 text-right';
+        
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'text-danger hover:text-danger/80 transition-colors';
+        deleteBtn.innerHTML = '<i class="fa fa-trash-o"></i>';
+        deleteBtn.addEventListener('click', () => {
+          FinanceApp.deleteTransaction(transaction.id);
+          updateTransactionsList();
+        });
+        
+        actionTd.appendChild(deleteBtn);
+        
+        tr.appendChild(dateTd);
+        tr.appendChild(categoryTd);
+        tr.appendChild(amountTd);
+        tr.appendChild(actionTd);
+        
+        tbody.appendChild(tr);
+      });
+    }
+  });
 </script>
+  
+  <!-- Tailwind 配置 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#165DFF',
+            success: '#00B42A',
+            danger: '#F53F3F',
+            warning: '#FF7D00',
+            dark: '#1D2129',
+            'dark-light': '#4E5969',
+            'light-gray': '#C9CDD4',
+            'ultra-light': '#F2F3F5'
+          },
+          fontFamily: {
+            inter: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .card-shadow {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      }
+      .card-hover {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+      .card-hover:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+      }
+      .number-animation {
+        transition: all 0.8s cubic-bezier(0.215, 0.610, 0.355, 1.000);
+      }
+      .pulse-indicator {
+        animation: pulse 2s infinite;
+      }
+      @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.6; }
+        100% { opacity: 1; }
+      }
+      .slide-in {
+        animation: slideIn 0.5s ease forwards;
+      }
+      @keyframes slideIn {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+      .fade-in {
+        animation: fadeIn 0.5s ease forwards;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      .content-auto {
+        content-visibility: auto;
+      }
+      .number-transition {
+        transition: all 1s ease-out;
+      }
+      .chart-container {
+        position: relative;
+        height: 100%;
+        width: 100%;
+      }
+      .calendar-day {
+        aspect-ratio: 1/1;
+        border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+      }
+      .calendar-day::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background-color: transparent;
+        transition: background-color 0.3s ease;
+      }
+      .calendar-day.has-income::before { background-color: #00B42A; }
+      .calendar-day.has-expense::before { background-color: #F53F3F; }
+      .calendar-day.has-repayment::before { background-color: #165DFF; }
+      .calendar-day.current-day::before { background-color: #165DFF; }
+      .calendar-day:hover {
+        transform: translateY(-5px) scale(1.05);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        z-index: 10;
+      }
+      .event-dot {
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        display: inline-block;
+        margin: 0 1px;
+      }
+      .tooltip-animation {
+        transition: all 0.2s ease-out;
+      }
+      .calendar-header {
+        position: relative;
+        z-index: 10;
+      }
+      .calendar-body {
+        position: relative;
+        z-index: 5;
+      }
+      .month-navigation {
+        transition: all 0.3s ease;
+      }
+      .month-navigation:hover {
+        transform: scale(1.1);
+      }
+      .calendar-day-number {
+        font-size: 1rem;
+        font-weight: 500;
+        margin-bottom: 2px;
+      }
+      .calendar-day-events {
+        display: flex;
+        justify-content: center;
+        gap: 2px;
+        margin-top: 2px;
+      }
+      .gradient-bg {
+        background: linear-gradient(135deg, rgba(22, 93, 255, 0.03) 0%, rgba(0, 180, 42, 0.02) 100%);
+      }
+      .calendar-day-content {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 2px 4px;
+        text-align: center;
+        transition: all 0.3s ease;
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      .calendar-day:hover .calendar-day-content {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .calendar-day-amount {
+        font-size: 0.75rem;
+        font-weight: 500;
+      }
+      .calendar-day-type {
+        font-size: 0.65rem;
+        color: #4E5969;
+      }
+      .income-day {
+        background-color: rgba(0, 180, 42, 0.05);
+      }
+      .expense-day {
+        background-color: rgba(245, 63, 63, 0.05);
+      }
+      .repayment-day {
+        background-color: rgba(22, 93, 255, 0.05);
+      }
+      .calendar-day-today {
+        background-color: rgba(22, 93, 255, 0.1);
+        border: 1px solid #165DFF;
+      }
+      .calendar-day-today .calendar-day-number {
+        color: #165DFF;
+        font-weight: 700;
+      }
+      .calendar-day-weekend {
+        color: #F53F3F;
+      }
+      .calendar-transition {
+        transition: all 0.5s ease-out;
+      }
+      .financial-stats-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+      .financial-stats-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+      }
+      .income-gradient {
+        background: linear-gradient(135deg, rgba(0, 180, 42, 0.05) 0%, rgba(0, 180, 42, 0.01) 100%);
+      }
+      .expense-gradient {
+        background: linear-gradient(135deg, rgba(245, 63, 63, 0.05) 0%, rgba(245, 63, 63, 0.01) 100%);
+      }
+      .balance-gradient {
+        background: linear-gradient(135deg, rgba(22, 93, 255, 0.05) 0%, rgba(22, 93, 255, 0.01) 100%);
+      }
+      .calendar-day-details {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background-color: white;
+        border-radius: 8px;
+        padding: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        z-index: 20;
+        transform: translateY(10px);
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+      }
+      .calendar-day:hover .calendar-day-details {
+        transform: translateY(5px);
+        opacity: 1;
+        visibility: visible;
+      }
+      .calendar-day-details-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 2px 0;
+        border-bottom: 1px solid #F2F3F5;
+      }
+      .calendar-day-details-item:last-child {
+        border-bottom: none;
+      }
+      .modal {
+        position: fixed;
+        inset: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 100;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+      }
+      .modal.active {
+        opacity: 1;
+        visibility: visible;
+      }
+      .modal-content {
+        background-color: white;
+        border-radius: 16px;
+        max-width: 400px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        transform: scale(0.9);
+        transition: transform 0.3s ease;
+      }
+      .modal.active .modal-content {
+        transform: scale(1);
+      }
+      .budget-progress-bar {
+        height: 6px;
+        border-radius: 3px;
+        overflow: hidden;
+        background-color: #F2F3F5;
+      }
+      .budget-progress {
+        height: 100%;
+        border-radius: 3px;
+        transition: width 1s ease-out;
+      }
+      .transaction-item {
+        transition: all 0.2s ease;
+      }
+      .transaction-item:hover {
+        background-color: rgba(22, 93, 255, 0.05);
+      }
+      .calendar-day.selected {
+        transform: scale(1.05);
+        box-shadow: 0 5px 15px rgba(22, 93, 255, 0.2);
+        border: 2px solid #165DFF;
+      }
+      .quick-add-btn {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        z-index: 50;
+        transition: transform 0.3s ease;
+      }
+      .quick-add-btn:hover {
+        transform: scale(1.1);
+      }
+      .category-pill {
+        display: inline-block;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 500;
+      }
+      .chart-tooltip {
+        position: absolute;
+        background-color: white;
+        padding: 8px 12px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        z-index: 100;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s ease, visibility 0.2s ease;
+      }
+      .chart-tooltip.active {
+        opacity: 1;
+        visibility: visible;
+      }
+      .financial-trend-chart {
+        height: 150px;
+      }
+      .number-pad {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        padding: 10px;
+      }
+      .number-key {
+        aspect-ratio: 1/1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 24px;
+        font-weight: 500;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .number-key:hover {
+        background-color: rgba(22, 93, 255, 0.1);
+      }
+      .category-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 15px;
+      }
+      .category-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 0;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .category-item:hover {
+        background-color: rgba(22, 93, 255, 0.05);
+      }
+      .category-item.active {
+        background-color: rgba(22, 93, 255, 0.1);
+      }
+      .category-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+      .input-field {
+        border: none;
+        border-bottom: 1px solid #F2F3F5;
+        padding: 8px 0;
+        width: 100%;
+        font-size: 16px;
+        outline: none;
+        transition: border-color 0.2s ease;
+      }
+      .input-field:focus {
+        border-color: #165DFF;
+      }
+      .form-step {
+        display: none;
+      }
+      .form-step.active {
+        display: block;
+      }
+      .slide-up {
+        animation: slideUp 0.3s ease forwards;
+      }
+      @keyframes slideUp {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+      .slide-down {
+        animation: slideDown 0.3s ease forwards;
+      }
+      @keyframes slideDown {
+        from { transform: translateY(0); opacity: 1; }
+        to { transform: translateY(20px); opacity: 0; }
+      }
+      .asset-card {
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+      }
+      .asset-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: all 0.6s ease;
+      }
+      .asset-card:hover::before {
+        left: 100%;
+      }
+      .hover-scale {
+        transition: transform 0.3s ease;
+      }
+      .hover-scale:hover {
+        transform: scale(1.05);
+      }
+      .stat-card {
+        transition: all 0.3s ease;
+      }
+      .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+      }
+      .number-counter {
+        display: inline-block;
+      }
+      .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .card-header .action-btn {
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+      .card:hover .card-header .action-btn {
+        opacity: 1;
+      }
+      .tab-btn {
+        position: relative;
+        transition: all 0.3s ease;
+      }
+      .tab-btn::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background-color: #165DFF;
+        transition: width 0.3s ease;
+      }
+      .tab-btn:hover::after {
+        width: 100%;
+      }
+      .tab-btn.active::after {
+        width: 100%;
+      }
+      .scroll-indicator {
+        position: absolute;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        animation: bounce 2s infinite;
+      }
+      @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% { transform: translateY(0) translateX(-50%); }
+        40% { transform: translateY(-10px) translateX(-50%); }
+        60% { transform: translateY(-5px) translateX(-50%); }
+      }
+    }
+  </style>
+</head>
 
-</body>
+<body class="font-inter bg-ultra-light text-dark min-h-screen flex flex-col">
+  <!-- 顶部导航栏 -->
+  <header class="bg-white sticky top-0 z-50 shadow-sm transition-all duration-300" id="mainHeader">
+    <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <i class="fa fa-line-chart text-primary text-2xl"></i>
+        <h1 class="text-xl font-bold">极简理财</h1>
+      </div>
+      
+      <div class="flex items-center space-x-4">
+        <button class="relative text-dark-light hover:text-primary transition-colors" id="notificationBtn">
+          <i class="fa fa-bell-o text-xl"></i>
+          <span class="absolute -top-1 -right-1 bg-danger text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">3</span>
+        </button>
+        <button class="relative text-dark-light hover:text-primary transition-colors" id="settingsBtn">
+          <i class="fa fa-cog text-xl"></i>
+        </button>
+        <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary hover-scale">
+          <span class="font-medium">简</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 主内容区 -->
+  <main class="flex-grow container mx-auto px-4 py-6">
+    <!-- 交易管理区域 -->
+    <div class="mb-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- 添加交易表单 -->
+      <div class="lg:col-span-1 bg-white rounded-xl p-6 card-shadow slide-in">
+        <h2 class="text-xl font-bold mb-4">添加交易</h2>
+        <form id="transactionForm">
+          <div class="mb-4">
+            <label class="block text-dark-light text-sm mb-2">类型</label>
+            <div class="flex space-x-2">
+              <button type="button" class="flex-1 py-2 px-4 rounded-lg border border-light-gray hover:border-primary transition-colors transaction-type-btn active" data-type="income">
+                <i class="fa fa-plus-circle text-success mr-2"></i>收入
+              </button>
+              <button type="button" class="flex-1 py-2 px-4 rounded-lg border border-light-gray hover:border-primary transition-colors transaction-type-btn" data-type="expense">
+                <i class="fa fa-minus-circle text-danger mr-2"></i>支出
+              </button>
+            </div>
+          </div>
+          
+          <div class="mb-4">
+            <label class="block text-dark-light text-sm mb-2">金额</label>
+            <input type="number" id="amountInput" class="w-full px-4 py-2 rounded-lg border border-light-gray focus:border-primary focus:ring-1 focus:ring-primary transition-colors" placeholder="0.00" step="0.01" required>
+          </div>
+          
+          <div class="mb-4">
+            <label class="block text-dark-light text-sm mb-2">分类</label>
+            <select id="categorySelect" class="w-full px-4 py-2 rounded-lg border border-light-gray focus:border-primary focus:ring-1 focus:ring-primary transition-colors" required>
+              <option value="" disabled selected>选择分类</option>
+              <option value="salary">工资</option>
+              <option value="investment">投资</option>
+              <option value="food">餐饮</option>
+              <option value="shopping">购物</option>
+              <option value="transportation">交通</option>
+              <option value="entertainment">娱乐</option>
+              <option value="other">其他</option>
+            </select>
+          </div>
+          
+          <div class="mb-4">
+            <label class="block text-dark-light text-sm mb-2">日期</label>
+            <input type="date" id="dateInput" class="w-full px-4 py-2 rounded-lg border border-light-gray focus:border-primary focus:ring-1 focus:ring-primary transition-colors" required>
+          </div>
+          
+          <div class="mb-4">
+            <label class="block text-dark-light text-sm mb-2">备注</label>
+            <textarea id="noteInput" class="w-full px-4 py-2 rounded-lg border border-light-gray focus:border-primary focus:ring-1 focus:ring-primary transition-colors" rows="2" placeholder="可选备注"></textarea>
+          </div>
+          
+          <div class="flex space-x-2">
+            <button type="submit" class="flex-1 bg-primary hover:bg-primary/90 text-white py-2 px-4 rounded-lg transition-colors">
+              保存
+            </button>
+            <button type="button" id="cancelBtn" class="flex-1 bg-ultra-light hover:bg-light-gray text-dark-light py-2 px-4 rounded-lg transition-colors">
+              取消
+            </button>
+          </div>
+        </form>
+      </div>
+      
+      <!-- 交易列表 -->
+      <div class="lg:col-span-2 bg-white rounded-xl p-6 card-shadow slide-in">
+        <div class="card-header mb-6">
+          <h2 class="text-xl font-bold">最近交易</h2>
+          <div class="flex space-x-3">
+            <button class="text-primary text-sm hover:underline action-btn flex items-center" id="filterBtn">
+              <i class="fa fa-filter mr-1"></i> 筛选
+            </button>
+            <button class="text-primary text-sm hover:underline action-btn flex items-center" id="exportBtn">
+              <i class="fa fa-download mr-1"></i> 导出
+            </button>
+          </div>
+        </div>
+        
+        <div class="overflow-x-auto">
+          <table class="w-full" id="transactionsTable">
+            <thead>
+              <tr class="text-dark-light text-sm border-b border-light-gray/30">
+                <th class="pb-2 text-left">日期</th>
+                <th class="pb-2 text-left">分类</th>
+                <th class="pb-2 text-right">金额</th>
+                <th class="pb-2 text-right">操作</th>
+              </tr>
+            </thead>
+            <tbody id="transactionsBody">
+              <!-- 交易记录将通过JavaScript动态填充 -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 导航标签 -->
+    <div class="mb-6">
+      <div class="flex border-b border-light-gray/30 overflow-x-auto">
+        <button class="px-4 py-2 text-primary font-medium border-b-2 border-primary whitespace-nowrap tab-btn active" data-tab="dashboard">
+          <i class="fa fa-dashboard mr-2"></i>总览
+        </button>
+        <button class="px-4 py-2 text-dark-light hover:text-primary transition-colors whitespace-nowrap tab-btn" data-tab="assets">
+          <i class="fa fa-money mr-2"></i>资产
+        </button>
+        <button class="px-4 py-2 text-dark-light hover:text-primary transition-colors whitespace-nowrap tab-btn" data-tab="liabilities">
+          <i class="fa fa-credit-card mr-2"></i>负债
+        </button>
+        <button class="px-4 py-2 text-dark-light hover:text-primary transition-colors whitespace-nowrap tab-btn" data-tab="reports">
+          <i class="fa fa-bar-chart mr-2"></i>报表
+        </button>
+        <button class="px-4 py-2 text-dark-light hover:text-primary transition-colors whitespace-nowrap tab-btn" data-tab="profile">
+          <i class="fa fa-user mr-2"></i>我的
+        </button>
+      </div>
+    </div>
+
+    <!-- 首页 - 总览 -->
+    <section id="dashboard" class="tab-content">
+      <!-- 财务统计图表和预算管理 -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+      <!-- 预算管理 -->
+      <div class="bg-white rounded-xl p-6 card-shadow">
+        <div class="card-header mb-4">
+          <h2 class="text-xl font-bold">预算管理</h2>
+          <button class="text-primary text-sm hover:underline action-btn flex items-center" id="addBudgetBtn">
+            <i class="fa fa-plus mr-1"></i> 添加
+          </button>
+        </div>
+        
+        <div class="space-y-4" id="budgetsList">
+          <!-- 预算项将通过JavaScript动态填充 -->
+        </div>
+        
+        <!-- 添加预算表单 (默认隐藏) -->
+        <div class="hidden mt-4" id="budgetForm">
+          <form id="addBudgetForm">
+            <div class="mb-4">
+              <label class="block text-dark-light text-sm mb-2">分类</label>
+              <select id="budgetCategory" class="w-full px-4 py-2 rounded-lg border border-light-gray focus:border-primary focus:ring-1 focus:ring-primary transition-colors" required>
+                <option value="" disabled selected>选择分类</option>
+                <option value="food">餐饮</option>
+                <option value="shopping">购物</option>
+                <option value="transportation">交通</option>
+                <option value="entertainment">娱乐</option>
+                <option value="other">其他</option>
+              </select>
+            </div>
+            
+            <div class="mb-4">
+              <label class="block text-dark-light text-sm mb-2">金额</label>
+              <input type="number" id="budgetAmount" class="w-full px-4 py-2 rounded-lg border border-light-gray focus:border-primary focus:ring-1 focus:ring-primary transition-colors" placeholder="0.00" step="0.01" required>
+            </div>
+            
+            <div class="mb-4">
+              <label class="block text-dark-light text-sm mb-2">周期</label>
+              <select id="budgetPeriod" class="w-full px-4 py-2 rounded-lg border border-light-gray focus:border-primary focus:ring-1 focus:ring-primary transition-colors" required>
+                <option value="monthly">月度</option>
+                <option value="weekly">每周</option>
+                <option value="daily">每日</option>
+              </select>
+            </div>
+            
+            <div class="flex space-x-2">
+              <button type="submit" class="flex-1 bg-primary hover:bg-primary/90 text-white py-2 px-4 rounded-lg transition-colors">
+                保存
+              </button>
+              <button type="button" id="cancelBudgetBtn" class="flex-1 bg-ultra-light hover:bg-light-gray text-dark-light py-2 px-4 rounded-lg transition-colors">
+                取消
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+      
+      <!-- 财务统计图表 -->
+      <div class="lg:col-span-2">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl p-6 card-shadow">
+          <h2 class="text-xl font-bold mb-4">收支比例</h2>
+          <div class="chart-container" style="height: 300px">
+            <canvas id="incomeExpensePieChart"></canvas>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl p-6 card-shadow">
+          <h2 class="text-xl font-bold mb-4">月度收支趋势</h2>
+          <div class="chart-container" style="height: 300px">
+            <canvas id="monthlyTrendChart"></canvas>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 总资产卡片和理财月历 -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+        <div class="lg:col-span-7 bg-white rounded-xl p-6 card-shadow asset-card slide-in">
+          <div class="card-header mb-6">
+            <h2 class="text-xl font-bold">总资产</h2>
+            <div class="flex space-x-3">
+              <button class="text-primary text-sm hover:underline action-btn flex items-center">
+                <i class="fa fa-bar-chart mr-1"></i> 详情
+              </button>
+              <button class="text-primary text-sm hover:underline action-btn flex items-center">
+                <i class="fa fa-pie-chart mr-1"></i> 分析
+              </button>
+            </div>
+          </div>
+          
+          <div class="flex items-end mb-6">
+            <span class="text-4xl font-bold number-animation number-transition number-counter" id="totalAssets">¥1,258,634.25</span>
+            <div class="ml-4">
+              <div class="text-success flex items-center text-sm">
+                <i class="fa fa-arrow-up mr-1"></i> 2.3% <span class="text-dark-light ml-1">本周</span>
+              </div>
+              <div class="text-dark-light text-sm mt-1">+¥12,345.67 今日</div>
+            </div>
+          </div>
+          
+          <div class="grid grid-cols-3 gap-4 mb-6">
+            <div class="bg-ultra-light rounded-lg p-4">
+              <div class="text-dark-light text-xs mb-1">活期存款</div>
+              <div class="font-medium">¥286,345.25</div>
+            </div>
+            <div class="bg-ultra-light rounded-lg p-4">
+              <div class="text-dark-light text-xs mb-1">定期存款</div>
+              <div class="font-medium">¥500,000.00</div>
+            </div>
+            <div class="bg-ultra-light rounded-lg p-4">
+              <div class="text-dark-light text-xs mb-1">投资</div>
+              <div class="font-medium">¥472,289.00</div>
+            </div>
+          </div>
+          
+          <div class="mt-6 h-56">
+            <canvas id="assetTrendChart"></canvas>
+          </div>
+        </div>
+        
+        <!-- 理财月历 -->
+        <div class="lg:col-span-5 bg-white rounded-xl p-6 card-shadow card-hover slide-in gradient-bg" style="animation-delay: 0.1s">
+          <div class="calendar-header">
+            <div class="flex justify-between items-center mb-6">
+              <h2 class="text-xl font-bold">理财月历</h2>
+              <div class="flex space-x-2">
+                <button class="p-2 rounded-full hover:bg-ultra-light transition-colors month-navigation" id="prevMonth">
+                  <i class="fa fa-chevron-left text-dark-light"></i>
+                </button>
+                <button class="p-2 rounded-full hover:bg-ultra-light transition-colors month-navigation" id="nextMonth">
+                  <i class="fa fa-chevron-right text-dark-light"></i>
+                </button>
+              </div>
+            </div>
+            
+            <!-- 月度财务概览 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+              <div class="bg-white rounded-xl p-4 financial-stats-card income-gradient stat-card">
+                <div class="text-dark-light text-xs">收入</div>
+                <div class="text-success font-medium mt-1 flex justify-between items-center">
+                  <span>¥28,654</span>
+                  <div class="flex items-center">
+                    <i class="fa fa-arrow-up text-xs mr-1"></i>
+                    <span class="text-xs">8.5%</span>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-white rounded-xl p-4 financial-stats-card expense-gradient stat-card">
+                <div class="text-dark-light text-xs">支出</div>
+                <div class="text-danger font-medium mt-1 flex justify-between items-center">
+                  <span>¥16,325</span>
+                  <div class="flex items-center">
+                    <i class="fa fa-arrow-down text-xs mr-1"></i>
+                    <span class="text-xs">3.2%</span>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-white rounded-xl p-4 financial-stats-card balance-gradient stat-card">
+                <div class="text-dark-light text-xs">结余</div>
+                <div class="text-primary font-medium mt-1 flex justify-between items-center">
+                  <span>¥12,328</span>
+                  <i class="fa fa-balance-scale text-xs"></i>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 月度趋势图 -->
+            <div class="bg-white rounded-xl p-4 mb-6 financial-stats-card stat-card">
+              <div class="text-dark-light text-xs mb-2">收支趋势</div>
+              <div class="financial-trend-chart">
+                <canvas id="monthlyTrendChart"></canvas>
+              </div>
+            </div>
+            
+            <div class="mb-4 text-center">
+              <h3 class="font-bold text-lg" id="currentMonth">2025年6月</h3>
+            </div>
+            
+            <div class="grid grid-cols-7 gap-1 mb-3">
+              <div class="text-center text-dark-light text-sm py-2 font-medium">日</div>
+              <div class="text-center text-dark-light text-sm py-2 font-medium">一</div>
+              <div class="text-center text-dark-light text-sm py-2 font-medium">二</div>
+              <div class="text-center text-dark-light text-sm py-2 font-medium">三</div>
+              <div class="text-center text-dark-light text-sm py-2 font-medium">四</div>
+              <div class="text-center text-dark-light text-sm py-2 font-medium">五</div>
+              <div class="text-center text-dark-light text-sm py-2 font-medium">六</div>
+            </div>
+          </div>
+          
+          <div class="calendar-body relative overflow-hidden">
+            <div class="grid grid-cols-7 gap-2 calendar-transition" id="calendarDays">
+              <!-- 日历内容将通过JavaScript动态生成 -->
+            </div>
+          </div>
+          
+          <!-- 优化后的图例布局 -->
+          <div class="mt-4 p-3 bg-ultra-light/50 rounded-lg">
+            <div class="flex flex-wrap justify-center gap-x-6 gap-y-2">
+              <div class="flex items-center">
+                <div class="w-3 h-3 rounded-full bg-success mr-2"></div>
+                <span class="text-sm text-dark-light">收入</span>
+              </div>
+              <div class="flex items-center">
+                <div class="w-3 h-3 rounded-full bg-danger mr-2"></div>
+                <span class="text-sm text-dark-light">支出</span>
+              </div>
+              <div class="flex items-center">
+                <div class="w-3 h-3 rounded-full bg-primary mr-2"></div>
+                <span class="text-sm text-dark-light">还款日</span>
+              </div>
+              <div class="flex items-center">
+                <div class="w-3 h-3 rounded-full bg-primary/70 border border-primary mr-2"></div>
+                <span class="text-sm text-dark-light">今天</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 快捷操作区 -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <button class="bg-white rounded-xl p-6 card-shadow hover-scale slide-in" style="animation-delay: 0.2s">
+          <div class="flex items-center">
+            <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary mr-4">
+              <i class="fa fa-exchange text-xl"></i>
+            </div>
+            <div>
+              <h3 class="font-medium">账户转账</h3>
+              <p class="text-dark-light text-sm mt-1">在不同账户间快速转账</p>
+            </div>
+          </div>
+        </button>
+        
+        <button class="bg-white rounded-xl p-6 card-shadow hover-scale slide-in" style="animation-delay: 0.3s">
+          <div class="flex items-center">
+            <div class="w-12 h-12 rounded-full bg-warning/10 flex items-center justify-center text-warning mr-4">
+              <i class="fa fa-credit-card text-xl"></i>
+            </div>
+            <div>
+              <h3 class="font-medium">信用卡还款</h3>
+              <p class="text-dark-light text-sm mt-1">及时还款，避免逾期</p>
+            </div>
+          </div>
+        </button>
+        
+        <button class="bg-white rounded-xl p-6 card-shadow hover-scale slide-in" style="animation-delay: 0.4s">
+          <div class="flex items-center">
+            <div class="w-12 h-12 rounded-full bg-success/10 flex items-center justify-center text-success mr-4">
+              <i class="fa fa-line-chart text-xl"></i>
+            </div>
+            <div>
+              <h3 class="font-medium">投资组合</h3>
+              <p class="text-dark-light text-sm mt-1">查看和管理您的投资</p>
+            </div>
+          </div>
+        </button>
+      </div>
+
+      <!-- 预算进度 -->
+      <div class="bg-white rounded-xl p-6 card-shadow card-hover slide-in mb-6" style="animation-delay: 0.15s">
+        <div class="card-header mb-6">
+          <h2 class="text-xl font-bold">本月预算进度</h2>
+          <button class="text-primary text-sm hover:underline action-btn flex items-center">
+            <i class="fa fa-cog mr-1"></i> 设置预算
+          </button>
+        </div>
+        
+        <div class="space-y-5">
+          <div>
+            <div class="flex justify-between mb-2">
+              <div class="flex items-center">
+                <div class="w-3 h-3 rounded-full bg-warning mr-2"></div>
+                <span class="font-medium">餐饮</span>
+              </div>
+              <span class="text-dark-light text-sm">¥2,550 / ¥3,000</span>
+            </div>
+            <div class="budget-progress-bar">
+              <div class="budget-progress bg-warning" style="width: 85%"></div>
+            </div>
+          </div>
+          
+          <div>
+            <div class="flex justify-between mb-2">
+              <div class="flex items-center">
+                <div class="w-3 h-3 rounded-full bg-danger mr-2"></div>
+                <span class="font-medium">购物</span>
+              </div>
+              <span class="text-dark-light text-sm">¥4,825 / ¥5,000</span>
+            </div>
+            <div class="budget-progress-bar">
+              <div class="budget-progress bg-danger" style="width: 96%"></div>
+            </div>
+          </div>
+          
+          <div>
+            <div class="flex justify-between mb-2">
+              <div class="flex items-center">
+                <div class="w-3 h-3 rounded-full bg-success mr-2"></div>
+                <span class="font-medium">交通</span>
+              </div>
+              <span class="text-dark-light text-sm">¥650 / ¥1,000</span>
+            </div>
+            <div class="budget-progress-bar">
+              <div class="budget-progress bg-success" style="width: 65%"></div>
+            </div>
+          </div>
+          
+          <div>
+            <div class="flex justify-between mb-2">
+              <div class="flex items-center">
+                <div class="w-3 h-3 rounded-full bg-primary mr-2"></div>
+                <span class="font-medium">娱乐</span>
+              </div>
+              <span class="text-dark-light text-sm">¥1,200 / ¥2,000</span>
+            </div>
+            <div class="budget-progress-bar">
+              <div class="budget-progress bg-primary" style="width: 60%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 本月收支概览 -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div class="bg-white rounded-xl p-6 card-shadow card-hover slide-in" style="animation-delay: 0.5s">
+          <div class="card-header mb-6">
+            <h2 class="text-xl font-bold">本月收入</h2>
+            <button class="text-primary text-sm hover:underline action-btn flex items-center">
+              <i class="fa fa-list mr-1"></i> 查看详情
+            </button>
+          </div>
+          <div class="flex items-end mb-6">
+            <span class="text-3xl font-bold number-animation number-counter">¥28,654.32</span>
+            <span class="text-dark-light ml-2 mb-0.5">较上月</span>
+          </div>
+          <div class="mt-6 grid grid-cols-3 gap-3">
+            <div class="bg-ultra-light rounded-lg p-4 text-center">
+              <div class="text-dark-light text-xs mb-1">工资</div>
+              <div class="font-medium">¥25,000</div>
+            </div>
+            <div class="bg-ultra-light rounded-lg p-4 text-center">
+              <div class="text-dark-light text-xs mb-1">投资</div>
+              <div class="font-medium">¥3,254</div>
+            </div>
+            <div class="bg-ultra-light rounded-lg p-4 text-center">
+              <div class="text-dark-light text-xs mb-1">其他</div>
+              <div class="font-medium">¥400.32</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl p-6 card-shadow card-hover slide-in" style="animation-delay: 0.6s">
+          <div class="card-header mb-6">
+            <h2 class="text-xl font-bold">本月支出</h2>
+            <button class="text-primary text-sm hover:underline action-btn flex items-center">
+              <i class="fa fa-list mr-1"></i> 查看详情
+            </button>
+          </div>
+          <div class="flex items-end mb-6">
+            <span class="text-3xl font-bold number-animation number-counter">¥16,325.78</span>
+            <span class="text-dark-light ml-2 mb-0.5">较上月</span>
+          </div>
+          <div class="mt-6 grid grid-cols-3 gap-3">
+            <div class="bg-ultra-light rounded-lg p-4 text-center">
+              <div class="text-dark-light text-xs mb-1">生活</div>
+              <div class="font-medium">¥6,500</div>
+            </div>
+            <div class="bg-ultra-light rounded-lg p-4 text-center">
+              <div class="text-dark-light text-xs mb-1">购物</div>
+              <div class="font-medium">¥4,825</div>
+            </div>
+            <div class="bg-ultra-light rounded-lg p-4 text-center">
+              <div class="text-dark-light text-xs mb-1">其他</div>
+              <div class="font-medium">¥4,900.78</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 消息中心 -->
+      <div class="bg-white rounded-xl p-6 card-shadow card-hover slide-in" style="animation-delay: 0.7s">
+        <div class="card-header mb-6">
+          <h2 class="text-xl font-bold">消息中心</h2>
+          <button class="text-primary text-sm hover:underline action-btn flex items-center">
+            <i class="fa fa-angle-right mr-1"></i> 查看全部
+          </button>
+        </div>
+        
+        <div class="space-y-4">
+          <div class="flex items-start p-4 rounded-xl bg-ultra-light/50 hover:bg-ultra-light transition-colors">
+            <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary mr-4 flex-shrink-0">
+              <i class="fa fa-bell-o"></i>
+            </div>
+            <div class="flex-grow">
+              <div class="flex justify-between">
+                <h3 class="font-medium">信用卡还款提醒</h3>
+                <span class="text-dark-light text-xs">10分钟前</span>
+              </div>
+              <p class="text-dark-light text-sm mt-1">您的招商银行信用卡（****5678）将于3天后到期，需还款¥3,562.89</p>
+            </div>
+          </div>
+          
+          <div class="flex items-start p-4 rounded-xl bg-ultra-light/50 hover:bg-ultra-light transition-colors">
+            <div class="w-10 h-10 rounded-full bg-success/10 flex items-center justify-center text-success mr-4 flex-shrink-0">
+              <i class="fa fa-line-chart"></i>
+            </div>
+            <div class="flex-grow">
+              <div class="flex justify-between">
+                <h3 class="font-medium">投资收益提醒</h3>
+                <span class="text-dark-light text-xs">2小时前</span>
+              </div>
+              <p class="text-dark-light text-sm mt-1">您的基金组合（易方达蓝筹精选混合）今日收益+¥245</p>
+            </div>
+          </div>
+          
+          <div class="flex items-start p-4 rounded-xl bg-ultra-light/50 hover:bg-ultra-light transition-colors">
+            <div class="w-10 h-10 rounded-full bg-warning/10 flex items-center justify-center text-warning mr-4 flex-shrink-0">
+              <i class="fa fa-exclamation-triangle"></i>
+            </div>
+            <div class="flex-grow">
+              <div class="flex justify-between">
+                <h3 class="font-medium">预算预警</h3>
+                <span class="text-dark-light text-xs">昨天</span>
+              </div>
+              <p class="text-dark-light text-sm mt-1">您的购物预算已使用96%，请注意控制支出</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 快速添加按钮 -->
+  <div class="quick-add-btn">
+    <button class="w-14 h-14 rounded-full bg-primary text-white shadow-lg flex items-center justify-center hover:scale-110 transition-all duration-300" id="quickAddBtn">
+      <i class="fa fa-plus text-xl"></i>
+    </button>
+  </div>
+
+  <!-- 快速记账模态框 -->
+  <div class="modal" id="quickAddModal">
+    <div class="modal-content">
+      <div class="p-6">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-xl font-bold">快记一笔</h3>
+          <button class="text-dark-light hover:text-dark" id="closeModalBtn">
+            <i class="fa fa-times text-xl"></i>
+          </button>
+        </div>
+        
+        <div class="form-step active" id="step1">
+          <div class="mb-6">
+            <div class="flex space-x-4 mb-4">
+              <button class="flex-1 py-3 rounded-lg bg-primary text-white font-medium" id="expenseBtn">支出</button>
+              <button class="flex-1 py-3 rounded-lg bg-ultra-light text-dark-light font-medium" id="incomeBtn">收入</button>
+            </div>
+            
+            <div class="category-grid">
+              <div class="category-item active" data-category="餐饮">
+                <div class="category-icon bg-danger/10 text-danger">
+                  <i class="fa fa-cutlery"></i>
+                </div>
+                <span class="text-sm">餐饮</span>
+              </div>
+              <div class="category-item" data-category="购物">
+                <div class="category-icon bg-warning/10 text-warning">
+                  <i class="fa fa-shopping-bag"></i>
+                </div>
+                <span class="text-sm">购物</span>
+              </div>
+              <div class="category-item" data-category="交通">
+                <div class="category-icon bg-primary/10 text-primary">
+                  <i class="fa fa-car"></i>
+                </div>
+                <span class="text-sm">交通</span>
+              </div>
+              <div class="category-item" data-category="娱乐">
+                <div class="category-icon bg-success/10 text-success">
+                  <i class="fa fa-film"></i>
+                </div>
+                <span class="text-sm">娱乐</span>
+              </div>
+              <div class="category-item" data-category="住房">
+                <div class="category-icon bg-dark/10 text-dark">
+                  <i class="fa fa-home"></i>
+                </div>
+                <span class="text-sm">住房</span>
+              </div>
+              <div class="category-item" data-category="医疗">
+                <div class="category-icon bg-danger/10 text-danger">
+                  <i class="fa fa-medkit"></i>
+                </div>
+                <span class="text-sm">医疗</span>
+              </div>
+              <div class="category-item" data-category="教育">
+                <div class="category-icon bg-primary/10 text-primary">
+                  <i class="fa fa-book"></i>
+                </div>
+                <span class="text-sm">教育</span>
+              </div>
+              <div class="category-item" data-category="其他">
+                <div class="category-icon bg-dark-light/10 text-dark-light">
+                  <i class="fa fa-ellipsis-h"></i>
+                </div>
+                <span class="text-sm">其他</span>
+              </div>
+            </div>
+          </div>
+          
+          <button class="w-full py-3 rounded-lg bg-primary text-white font-medium" id="nextStepBtn">下一步</button>
+        </div>
+        
+        <div class="form-step" id="step2">
+          <div class="mb-6">
+            <div class="text-center mb-4">
+              <span class="text-5xl font-bold" id="amountDisplay">¥0.00</span>
+            </div>
+            
+            <div class="number-pad">
+              <div class="number-key" data-number="1">1</div>
+              <div class="number-key" data-number="2">2</div>
+              <div class="number-key" data-number="3">3</div>
+              <div class="number-key" data-number="4">4</div>
+              <div class="number-key" data-number="5">5</div>
+              <div class="number-key" data-number="6">6</div>
+              <div class="number-key" data-number="7">7</div>
+              <div class="number-key" data-number="8">8</div>
+              <div class="number-key" data-number="9">9</div>
+              <div class="number-key" data-number="00">00</div>
+              <div class="number-key" data-number="0">0</div>
+              <div class="number-key" data-number="del">
+                <i class="fa fa-backspace"></i>
+              </div>
+            </div>
+          </div>
+          
+          <div class="flex space-x-4">
+            <button class="flex-1 py-3 rounded-lg bg-ultra-light text-dark font-medium" id="prevStepBtn">上一步</button>
+            <button class="flex-1 py-3 rounded-lg bg-primary text-white font-medium" id="saveTransactionBtn">保存</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 页面加载完成后执行
+    document.addEventListener('DOMContentLoaded', function() {
+      // 初始化图表
+      initCharts();
+      
+      // 初始化日历
+      initCalendar();
+      
+      // 初始化快速记账模态框
+      initQuickAddModal();
+      
+      // 初始化标签切换
+      initTabSwitching();
+      
+      // 监听滚动事件，改变导航栏样式
+      window.addEventListener('scroll', function() {
+        const header = document.getElementById('mainHeader');
+        if (window.scrollY > 10) {
+          header.classList.add('shadow-md');
+        } else {
+          header.classList.remove('shadow-md');
+        }
+      });
+      
+      // 数字滚动动画
+      initNumberCounters();
+    });
+    
+    // 初始化图表
+    function initCharts() {
+      // 总资产趋势图
+      const assetTrendCtx = document.getElementById('assetTrendChart').getContext('2d');
+      const assetTrendChart = new Chart(assetTrendCtx, {
+        type: 'line',
+        data: {
+          labels: ['1月', '2月', '3月', '4月', '5月', '6月'],
+          datasets: [{
+            label: '总资产 (万元)',
+            data: [118, 120, 122, 124, 125, 126],
+            borderColor: '#165DFF',
+            backgroundColor: 'rgba(22, 93, 255, 0.1)',
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: '#FFFFFF',
+            pointBorderColor: '#165DFF',
+            pointBorderWidth: 2,
+            pointRadius: 4,
+            pointHoverRadius: 6
+          }]
+        },
+        options: {
