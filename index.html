@@ -71,6 +71,67 @@ document.querySelector('[data-tab="reports"]').addEventListener('click', () => {
   setTimeout(renderCharts, 100); // 延迟确保 canvas 已渲染
 });
 
+// ===== 负债功能 =====
+function loadDebts() {
+  const data = JSON.parse(localStorage.getItem('debts') || '[]');
+  const container = document.getElementById('debtCards');
+  container.innerHTML = '';
+  let summary = {};
+  data.forEach((debt, index) => {
+    summary[debt.category] = (summary[debt.category] || 0) + parseFloat(debt.amount);
+    const card = document.createElement('div');
+    card.style.background = '#fff3f3';
+    card.style.padding = '10px';
+    card.style.borderRadius = '6px';
+    card.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
+    card.innerHTML = `<strong>${debt.name}</strong><br>¥${parseFloat(debt.amount).toFixed(2)}<br><small>${debt.category}</small><br><button onclick="deleteDebt(${index})" style='margin-top:5px;'>🗑 删除</button>`;
+    container.appendChild(card);
+  });
+
+  const ctx = document.getElementById('debtChart');
+  if (ctx && typeof Chart !== 'undefined') {
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: Object.keys(summary),
+        datasets: [{
+          label: '各类负债金额',
+          data: Object.values(summary),
+          backgroundColor: 'rgba(255,99,132,0.6)'
+        }]
+      },
+      options: {
+        plugins: { title: { display: true, text: '负债分类统计图' } },
+        responsive: true
+      }
+    });
+  }
+}
+
+document.getElementById('debtForm').addEventListener('submit', function (e) {
+  e.preventDefault();
+  const name = document.getElementById('debtName').value;
+  const amount = document.getElementById('debtAmount').value;
+  const category = document.getElementById('debtCategory').value;
+  if (!name || !amount) return alert('请输入完整负债信息');
+  const data = JSON.parse(localStorage.getItem('debts') || '[]');
+  data.push({ name, amount, category });
+  localStorage.setItem('debts', JSON.stringify(data));
+  this.reset();
+  loadDebts();
+});
+
+function deleteDebt(index) {
+  const data = JSON.parse(localStorage.getItem('debts') || '[]');
+  data.splice(index, 1);
+  localStorage.setItem('debts', JSON.stringify(data));
+  loadDebts();
+}
+
+document.querySelector('[data-tab="liabilities"]').addEventListener('click', () => {
+  setTimeout(loadDebts, 100);
+});
+
 // ===== 资产功能 =====
 function loadAssets() {
   const data = JSON.parse(localStorage.getItem('assets') || '[]');
@@ -225,6 +286,20 @@ document.querySelector('[data-tab="assets"]').addEventListener('click', () => {
       <h2>资产</h2><p>资产内容待扩展。</p>
     </section>
     <section id="liabilities" class="tab-content">
+  <h2>我的负债</h2>
+  <form id="debtForm" style="margin-bottom: 20px;">
+    <input type="text" id="debtName" placeholder="负债名称（如 建设银行信用卡）" required>
+    <input type="number" id="debtAmount" placeholder="金额" required>
+    <select id="debtCategory">
+      <option value="信用卡">信用卡</option>
+      <option value="房贷">房贷</option>
+      <option value="借款">借款</option>
+    </select>
+    <button type="submit">添加负债</button>
+  </form>
+  <div id="debtCards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;"></div>
+  <canvas id="debtChart" height="180" style="margin-top: 30px;"></canvas>
+
       <h2>负债</h2><p>负债内容待扩展。</p>
     </section>
     <section id="reports" class="tab-content">
@@ -368,6 +443,67 @@ function renderCharts() {
 // 每次切换到报表页面时刷新图表
 document.querySelector('[data-tab="reports"]').addEventListener('click', () => {
   setTimeout(renderCharts, 100); // 延迟确保 canvas 已渲染
+});
+
+// ===== 负债功能 =====
+function loadDebts() {
+  const data = JSON.parse(localStorage.getItem('debts') || '[]');
+  const container = document.getElementById('debtCards');
+  container.innerHTML = '';
+  let summary = {};
+  data.forEach((debt, index) => {
+    summary[debt.category] = (summary[debt.category] || 0) + parseFloat(debt.amount);
+    const card = document.createElement('div');
+    card.style.background = '#fff3f3';
+    card.style.padding = '10px';
+    card.style.borderRadius = '6px';
+    card.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
+    card.innerHTML = `<strong>${debt.name}</strong><br>¥${parseFloat(debt.amount).toFixed(2)}<br><small>${debt.category}</small><br><button onclick="deleteDebt(${index})" style='margin-top:5px;'>🗑 删除</button>`;
+    container.appendChild(card);
+  });
+
+  const ctx = document.getElementById('debtChart');
+  if (ctx && typeof Chart !== 'undefined') {
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: Object.keys(summary),
+        datasets: [{
+          label: '各类负债金额',
+          data: Object.values(summary),
+          backgroundColor: 'rgba(255,99,132,0.6)'
+        }]
+      },
+      options: {
+        plugins: { title: { display: true, text: '负债分类统计图' } },
+        responsive: true
+      }
+    });
+  }
+}
+
+document.getElementById('debtForm').addEventListener('submit', function (e) {
+  e.preventDefault();
+  const name = document.getElementById('debtName').value;
+  const amount = document.getElementById('debtAmount').value;
+  const category = document.getElementById('debtCategory').value;
+  if (!name || !amount) return alert('请输入完整负债信息');
+  const data = JSON.parse(localStorage.getItem('debts') || '[]');
+  data.push({ name, amount, category });
+  localStorage.setItem('debts', JSON.stringify(data));
+  this.reset();
+  loadDebts();
+});
+
+function deleteDebt(index) {
+  const data = JSON.parse(localStorage.getItem('debts') || '[]');
+  data.splice(index, 1);
+  localStorage.setItem('debts', JSON.stringify(data));
+  loadDebts();
+}
+
+document.querySelector('[data-tab="liabilities"]').addEventListener('click', () => {
+  setTimeout(loadDebts, 100);
 });
 
 // ===== 资产功能 =====
